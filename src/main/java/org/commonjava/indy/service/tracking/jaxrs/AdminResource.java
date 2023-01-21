@@ -15,6 +15,15 @@
  */
 package org.commonjava.indy.service.tracking.jaxrs;
 
+import org.commonjava.event.common.EventMetadata;
+import org.commonjava.indy.service.tracking.TrackingKey;
+import org.commonjava.indy.service.tracking.controller.AdminController;
+import org.commonjava.indy.service.tracking.controller.Constants;
+import org.commonjava.indy.service.tracking.dto.TrackedContentDTO;
+import org.commonjava.indy.service.tracking.dto.TrackedContentEntryDTO;
+import org.commonjava.indy.service.tracking.dto.TrackingIdsDTO;
+import org.commonjava.indy.service.tracking.exception.ContentException;
+import org.commonjava.indy.service.tracking.exception.IndyWorkflowException;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -26,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -39,8 +49,12 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
+import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import static java.util.Collections.emptySet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.eclipse.microprofile.openapi.annotations.enums.ParameterIn.PATH;
 
@@ -53,6 +67,15 @@ public class AdminResource
 
     private final Logger logger = LoggerFactory.getLogger( getClass() );
 
+    @Inject
+    private AdminController controller;
+
+    @Inject
+    private ResponseHelper responseHelper;
+
+    @Inject
+    private FoloISPN2CassandraMigrationAction foloISPN2CassandraMigrationAction;
+
     public AdminResource()
     {
     }
@@ -63,13 +86,33 @@ public class AdminResource
     @Path( "/{id}/record/recalculate" )
     @GET
     public Response recalculateRecord(
-                    @Parameter( description = "User-assigned tracking session key", in = PATH, required = true ) @PathParam( "id" ) final String id )
+                    @Parameter( description = "User-assigned tracking session key", in = PATH, required = true ) @PathParam( "id" ) final String id,
+                    @Context final UriInfo uriInfo )
     {
         Response response;
 
-        logger.info( "id is: {}", id );
+        try
+        {
+            final String baseUrl = uriInfo.getBaseUriBuilder().path( "api" ).build().toString();
+            final TrackedContentDTO report = controller.recalculateRecord( id, baseUrl );
 
-        response = Response.ok().build();
+            if ( report == null )
+            {
+                response = Response.status( Response.Status.NOT_FOUND ).build();
+            }
+            else
+            {
+                response = responseHelper.formatOkResponseWithJsonEntity( report );
+            }
+        }
+        catch ( final IndyWorkflowException e )
+        {
+            logger.error( String.format( "Failed to serialize tracking report for: %s. Reason: %s", id,
+                                         e.getMessage() ), e );
+
+            response = responseHelper.formatResponse( e );
+        }
+
         return response;
     }
 
@@ -79,15 +122,20 @@ public class AdminResource
     @Path( "/{id}/record/zip" )
     @GET
     @Produces( MEDIATYPE_APPLICATION_ZIP )
-    public Response getZipRepository(
+    public File getZipRepository(
                     @Parameter( description = "User-assigned tracking session key", in = PATH, required = true ) @PathParam( "id" ) final String id )
     {
-        Response response;
+        try
+        {
+            File zip = controller.renderRepositoryZip( id );
+            return zip;
+        }
+        catch ( IndyWorkflowException e )
+        {
+            responseHelper.throwError( e );
+        }
 
-        logger.info( "id is: {}", id );
-
-        response = Response.ok().build();
-        return response;
+        return null;
     }
 
     @Operation( description = "Alias of /{id}/record, returns the tracking record for the specified key" )
@@ -96,14 +144,10 @@ public class AdminResource
     @Path( "/{id}/report" )
     @GET
     public Response getReport(
-                    @Parameter( description = "User-assigned tracking session key", in = PATH, required = true ) @PathParam( "id" ) final String id )
+                    @Parameter( description = "User-assigned tracking session key", in = PATH, required = true ) @PathParam( "id" ) final String id,
+                    @Context final UriInfo uriInfo )
     {
-        Response response;
-
-        logger.info( "id is: {}", id );
-
-        response = Response.ok().build();
-        return response;
+        return getRecord( id, uriInfo );
     }
 
     @Operation( description = "Explicitly setup a new tracking record for the specified key, to prevent 404 if the record is never used." )
@@ -111,14 +155,11 @@ public class AdminResource
     @Path( "/{id}/record" )
     @PUT
     public Response initRecord(
-                    @Parameter( description = "User-assigned tracking session key", in = PATH, required = true ) @PathParam( "id" ) final String id )
+                    @Parameter( description = "User-assigned tracking session key", in = PATH, required = true ) @PathParam( "id" ) final String id,
+                    @Context final UriInfo uriInfo )
     {
-        Response response;
-
-        logger.info( "id is: {}", id );
-
-        response = Response.ok().build();
-        return response;
+        Response.ResponseBuilder rb = Response.created( uriInfo.getRequestUri() );
+        return rb.build();
     }
 
     @Operation( description = "Seal the tracking record for the specified key, to prevent further content logging" )
@@ -127,29 +168,54 @@ public class AdminResource
     @Path( "/{id}/record" )
     @POST
     public Response sealRecord(
-                    @Parameter( description = "User-assigned tracking session key", in = PATH, required = true ) @PathParam( "id" ) final String id )
+                    @Parameter( description = "User-assigned tracking session key", in = PATH, required = true ) @PathParam( "id" ) final String id,
+                    @Context final UriInfo uriInfo )
     {
-        Response response;
-
-        logger.info( "id is: {}", id );
-
-        response = Response.ok().build();
-        return response;
+        final String baseUrl = uriInfo.getBaseUriBuilder().path( "api" ).build().toString();
+        TrackedContentDTO record = controller.seal( id, baseUrl );
+        if ( record == null )
+        {
+            return Response.status( Response.Status.NOT_FOUND ).build();
+        }
+        else
+        {
+            return Response.ok().build();
+        }
     }
 
     @Operation( description = "Alias of /{id}/record, returns the tracking record for the specified key" )
     @APIResponse( responseCode = "200", description = "Tracking record" )
     @APIResponse( responseCode = "404", description = "No such tracking record" )
-    @Path( "/{id}/record" )
+    @Path( "/{id}/report" )
     @GET
     public Response getRecord(
-                    @Parameter( description = "User-assigned tracking session key", in = PATH, required = true ) @PathParam( "id" ) final String id )
+                    @Parameter( description = "User-assigned tracking session key", in = PATH, required = true ) @PathParam( "id" ) final String id,
+                    @Context final UriInfo uriInfo )
     {
         Response response;
+        try
+        {
+            final String baseUrl = uriInfo.getBaseUriBuilder().path( "api" ).build().toString();
+            TrackedContentDTO record = controller.getRecord( id, baseUrl );
+            if ( record == null )
+            {
+                record = controller.getLegacyRecord( id, baseUrl ); // Try legacy record
+            }
+            if ( record == null )
+            {
+                // if not found, return an empty report
+                record = new TrackedContentDTO( new TrackingKey( id ), emptySet(), emptySet() );
+            }
+            response = responseHelper.formatOkResponseWithJsonEntity( record );
+        }
+        catch ( final IndyWorkflowException e )
+        {
+            logger.error( String.format( "Failed to retrieve tracking report for: %s. Reason: %s", id, e.getMessage() ),
+                          e );
 
-        logger.info( "id is: {}", id );
+            response = responseHelper.formatResponse( e );
+        }
 
-        response = Response.ok().build();
         return response;
     }
 
@@ -160,10 +226,16 @@ public class AdminResource
                     @Parameter( description = "User-assigned tracking session key", in = PATH, required = true ) @PathParam( "id" ) final String id )
     {
         Response response;
+        try
+        {
+            controller.clearRecord( id );
+            response = Response.status( Response.Status.NO_CONTENT ).build();
+        }
+        catch ( ContentException e )
+        {
+            response = responseHelper.formatResponse( e );
+        }
 
-        logger.info( "id is: {}", id );
-
-        response = Response.ok().build();
         return response;
     }
 
@@ -176,10 +248,25 @@ public class AdminResource
                     @Parameter( description = "Report type, should be in_progress|sealed|all|legacy", in = PATH, required = true ) @PathParam( "type" ) final String type )
     {
         Response response;
+        TrackingIdsDTO ids;
+        if ( LEGACY.equals( type ) )
+        {
+            ids = controller.getLegacyTrackingIds();
+        }
+        else
+        {
+            Set<Constants.TRACKING_TYPE> types = getRequiredTypes( type );
+            ids = controller.getTrackingIds( types );
+        }
+        if ( ids != null )
+        {
+            response = responseHelper.formatOkResponseWithJsonEntity( ids );
+        }
+        else
+        {
+            response = Response.status( Response.Status.NOT_FOUND ).build();
+        }
 
-        logger.info( "type is: {}", type );
-
-        response = Response.ok().build();
         return response;
     }
 
@@ -190,10 +277,16 @@ public class AdminResource
     @Produces( MEDIATYPE_APPLICATION_ZIP )
     public Response exportReport()
     {
-        Response response;
+        try
+        {
+            return controller.renderReportZip();
+        }
+        catch ( IndyWorkflowException e )
+        {
+            responseHelper.throwError( e );
+        }
 
-        response = Response.ok().build();
-        return response;
+        return null;
     }
 
     @Operation( description = "Import records from a ZIP file." )
@@ -202,7 +295,35 @@ public class AdminResource
     @PUT
     public Response importReport( final @Context UriInfo uriInfo, final @Context HttpServletRequest request )
     {
+        try
+        {
+            controller.importRecordZip( request.getInputStream() );
+        }
+        catch ( IndyWorkflowException e )
+        {
+            responseHelper.throwError( e );
+        }
+        catch ( IOException e )
+        {
+            responseHelper.throwError( new IndyWorkflowException( "IO error", e ) );
+        }
+
         return Response.created( uriInfo.getRequestUri() ).build();
+    }
+
+    private Set<Constants.TRACKING_TYPE> getRequiredTypes( String type )
+    {
+        Set<Constants.TRACKING_TYPE> types = new HashSet<>();
+
+        if ( IN_PROGRESS.getValue().equals( type ) || ALL.equals( type ) )
+        {
+            types.add( IN_PROGRESS );
+        }
+        if ( SEALED.getValue().equals( type ) || ALL.equals( type ) )
+        {
+            types.add( SEALED );
+        }
+        return types;
     }
 
     @Operation( description = "Batch delete files uploaded through FOLO trackingID under the given storeKey." )
@@ -214,7 +335,40 @@ public class AdminResource
     @Produces( APPLICATION_JSON )
     public Response doDelete( @Context final UriInfo uriInfo, @Context final HttpServletRequest request )
     {
-        return Response.created( uriInfo.getRequestUri() ).build();
+        String trackingID = request.getTrackingID();
+
+        if ( trackingID == null || request.getStoreKey() == null )
+        {
+            Response.ResponseBuilder builder = Response.status( 400 );
+            return builder.build();
+        }
+
+        if ( request.getPaths() == null || request.getPaths().isEmpty() )
+        {
+            final String baseUrl = uriInfo.getBaseUriBuilder().path( "api" ).build().toString();
+            try
+            {
+                final TrackedContentDTO record = controller.getRecord( trackingID, baseUrl );
+                if ( record == null || record.getUploads().isEmpty() )
+                {
+                    Response.ResponseBuilder builder = Response.status( 400 );
+                    return builder.build();
+                }
+
+                Set<String> paths = new HashSet<>();
+                for ( TrackedContentEntryDTO entry : record.getUploads() )
+                {
+                    paths.add( entry.getPath() );
+                }
+                request.setPaths( paths );
+            }
+            catch ( IndyWorkflowException e )
+            {
+                responseHelper.throwError( e );
+            }
+        }
+
+        return handler.doDelete( request, new EventMetadata() );
     }
 
     @Operation( description = "Import folo from ISPN cache to Cassandra." )
@@ -223,6 +377,10 @@ public class AdminResource
     @PUT
     public Response importFoloToCassandra( final @Context UriInfo uriInfo, final @Context HttpServletRequest request )
     {
+        // run it on backend
+        Thread t = new Thread( () -> foloISPN2CassandraMigrationAction.migrate() );
+        t.setPriority( Thread.MAX_PRIORITY );
+        t.start();
         return Response.created( uriInfo.getRequestUri() ).build();
     }
 
