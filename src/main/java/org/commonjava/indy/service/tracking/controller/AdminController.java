@@ -1,6 +1,7 @@
 package org.commonjava.indy.service.tracking.controller;
 
 import org.commonjava.event.common.EventMetadata;
+import org.commonjava.indy.service.tracking.Constants;
 import org.commonjava.indy.service.tracking.config.IndyTrackingConfiguration;
 import org.commonjava.indy.service.tracking.data.FoloFiler;
 import org.commonjava.indy.service.tracking.data.cassandra.CassandraFoloRecord;
@@ -42,7 +43,6 @@ import java.util.zip.ZipOutputStream;
 
 import static org.apache.commons.io.IOUtils.closeQuietly;
 import static org.apache.commons.io.IOUtils.copy;
-import static org.commonjava.indy.service.tracking.controller.Constants.TRACKING_TYPE.SEALED;
 import static org.commonjava.indy.service.tracking.util.FoloUtils.backupTrackedContent;
 import static org.commonjava.indy.service.tracking.util.FoloUtils.readZipInputStreamAnd;
 import static org.commonjava.indy.service.tracking.util.FoloUtils.zipTrackedContent;

@@ -15,11 +15,11 @@
  */
 package org.commonjava.indy.service.tracking.jaxrs;
 
-import org.commonjava.event.common.EventMetadata;
+import org.commonjava.indy.service.tracking.Constants;
 import org.commonjava.indy.service.tracking.controller.AdminController;
-import org.commonjava.indy.service.tracking.controller.Constants;
 import org.commonjava.indy.service.tracking.exception.ContentException;
 import org.commonjava.indy.service.tracking.exception.IndyWorkflowException;
+import org.commonjava.indy.service.tracking.model.BatchDeleteRequest;
 import org.commonjava.indy.service.tracking.model.TrackingKey;
 import org.commonjava.indy.service.tracking.model.dto.TrackedContentDTO;
 import org.commonjava.indy.service.tracking.model.dto.TrackedContentEntryDTO;
@@ -56,6 +56,10 @@ import java.util.Set;
 
 import static java.util.Collections.emptySet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.commonjava.indy.service.tracking.Constants.ALL;
+import static org.commonjava.indy.service.tracking.Constants.LEGACY;
+import static org.commonjava.indy.service.tracking.Constants.TRACKING_TYPE.IN_PROGRESS;
+import static org.commonjava.indy.service.tracking.Constants.TRACKING_TYPE.SEALED;
 import static org.eclipse.microprofile.openapi.annotations.enums.ParameterIn.PATH;
 
 @Tag( name = "Tracking Record Access", description = "Manages tracking records." )
@@ -72,9 +76,6 @@ public class AdminResource
 
     @Inject
     private ResponseHelper responseHelper;
-
-    @Inject
-    private FoloISPN2CassandraMigrationAction foloISPN2CassandraMigrationAction;
 
     public AdminResource()
     {
@@ -275,7 +276,7 @@ public class AdminResource
     @Path( "/report/export" )
     @GET
     @Produces( MEDIATYPE_APPLICATION_ZIP )
-    public Response exportReport()
+    public File exportReport()
     {
         try
         {
@@ -333,7 +334,7 @@ public class AdminResource
     @POST
     @Consumes( APPLICATION_JSON )
     @Produces( APPLICATION_JSON )
-    public Response doDelete( @Context final UriInfo uriInfo, @Context final HttpServletRequest request )
+    public Response doDelete( @Context final UriInfo uriInfo, @Context final BatchDeleteRequest request )
     {
         String trackingID = request.getTrackingID();
 
@@ -368,7 +369,10 @@ public class AdminResource
             }
         }
 
-        return handler.doDelete( request, new EventMetadata() );
+        // TODO change this to rest call
+        // return handler.doDelete( request, new EventMetadata() );
+        Response.ResponseBuilder builder = Response.status( 200 );
+        return builder.build();
     }
 
     @Operation( description = "Import folo from ISPN cache to Cassandra." )
@@ -377,10 +381,11 @@ public class AdminResource
     @PUT
     public Response importFoloToCassandra( final @Context UriInfo uriInfo, final @Context HttpServletRequest request )
     {
+        // TODO figure this out
         // run it on backend
-        Thread t = new Thread( () -> foloISPN2CassandraMigrationAction.migrate() );
-        t.setPriority( Thread.MAX_PRIORITY );
-        t.start();
+        // Thread t = new Thread( () -> foloISPN2CassandraMigrationAction.migrate() );
+        // t.setPriority( Thread.MAX_PRIORITY );
+        // t.start();
         return Response.created( uriInfo.getRequestUri() ).build();
     }
 
