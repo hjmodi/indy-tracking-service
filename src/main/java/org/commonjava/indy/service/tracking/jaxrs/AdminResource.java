@@ -16,14 +16,14 @@
 package org.commonjava.indy.service.tracking.jaxrs;
 
 import org.commonjava.event.common.EventMetadata;
-import org.commonjava.indy.service.tracking.model.TrackingKey;
 import org.commonjava.indy.service.tracking.controller.AdminController;
 import org.commonjava.indy.service.tracking.controller.Constants;
-import org.commonjava.indy.service.tracking.dto.TrackedContentDTO;
-import org.commonjava.indy.service.tracking.dto.TrackedContentEntryDTO;
-import org.commonjava.indy.service.tracking.dto.TrackingIdsDTO;
 import org.commonjava.indy.service.tracking.exception.ContentException;
 import org.commonjava.indy.service.tracking.exception.IndyWorkflowException;
+import org.commonjava.indy.service.tracking.model.TrackingKey;
+import org.commonjava.indy.service.tracking.model.dto.TrackedContentDTO;
+import org.commonjava.indy.service.tracking.model.dto.TrackedContentEntryDTO;
+import org.commonjava.indy.service.tracking.model.dto.TrackingIdsDTO;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;

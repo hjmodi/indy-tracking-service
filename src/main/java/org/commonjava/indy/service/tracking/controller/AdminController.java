@@ -1,13 +1,20 @@
 package org.commonjava.indy.service.tracking.controller;
 
+import org.commonjava.event.common.EventMetadata;
+import org.commonjava.indy.service.tracking.config.IndyTrackingConfiguration;
+import org.commonjava.indy.service.tracking.data.FoloFiler;
+import org.commonjava.indy.service.tracking.data.cassandra.CassandraFoloRecord;
+import org.commonjava.indy.service.tracking.exception.ContentException;
+import org.commonjava.indy.service.tracking.exception.IndyWorkflowException;
+import org.commonjava.indy.service.tracking.model.AccessChannel;
+import org.commonjava.indy.service.tracking.model.StoreEffect;
+import org.commonjava.indy.service.tracking.model.StoreKey;
 import org.commonjava.indy.service.tracking.model.TrackedContent;
 import org.commonjava.indy.service.tracking.model.TrackedContentEntry;
 import org.commonjava.indy.service.tracking.model.TrackingKey;
-import org.commonjava.indy.service.tracking.config.IndyTrackingConfiguration;
-import org.commonjava.indy.service.tracking.dto.TrackedContentDTO;
-import org.commonjava.indy.service.tracking.dto.TrackedContentEntryDTO;
-import org.commonjava.indy.service.tracking.dto.TrackingIdsDTO;
-import org.commonjava.indy.service.tracking.exception.IndyWorkflowException;
+import org.commonjava.indy.service.tracking.model.dto.TrackedContentDTO;
+import org.commonjava.indy.service.tracking.model.dto.TrackedContentEntryDTO;
+import org.commonjava.indy.service.tracking.model.dto.TrackingIdsDTO;
 import org.commonjava.indy.service.tracking.util.ApplicationStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +57,7 @@ public class AdminController
     private IndyTrackingConfiguration config;
 
     @Inject
-    private FoloRecord recordManager;
+    private CassandraFoloRecord recordManager;
 
     @Inject
     private FoloFiler filer;
@@ -236,7 +243,7 @@ public class AdminController
         return constructContentDTO( recordManager.getLegacy( tk ), baseUrl );
     }
 
-    public void clearRecord( final String id ) throws FoloContentException
+    public void clearRecord( final String id ) throws ContentException
     {
         final TrackingKey tk = new TrackingKey( id );
         recordManager.delete( tk );

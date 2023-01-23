@@ -13,44 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.commonjava.indy.service.tracking.dto;
+package org.commonjava.indy.service.tracking.data;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
-public class TrackingIdsDTO
+/**
+ * Created by jdcasey on 9/9/15.
+ */
+public final class FoloFileTypes
 {
 
-    private Set<String> inProgress;
+    public static final String RECORD_JSON = "json";
 
-    private Set<String> sealed;
+    public static final String REPO_ZIP = "repo.zip";
 
-    public TrackingIdsDTO()
+    public static final Set<String> TYPES =
+                    Collections.unmodifiableSet( new HashSet<>( Arrays.asList( RECORD_JSON, REPO_ZIP ) ) );
+
+    private FoloFileTypes()
     {
-    }
-
-    public TrackingIdsDTO( final Set<String> inProgress, final Set<String> sealed )
-    {
-        this.inProgress = inProgress;
-        this.sealed = sealed;
-    }
-
-    public Set<String> getInProgress()
-    {
-        return inProgress;
-    }
-
-    public void setInProgress( Set<String> inProgress )
-    {
-        this.inProgress = inProgress;
-    }
-
-    public Set<String> getSealed()
-    {
-        return sealed;
-    }
-
-    public void setSealed( Set<String> sealed )
-    {
-        this.sealed = sealed;
     }
 }

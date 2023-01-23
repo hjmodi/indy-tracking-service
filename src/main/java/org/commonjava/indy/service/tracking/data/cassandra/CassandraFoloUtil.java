@@ -21,6 +21,7 @@ public class CassandraFoloUtil
     public static final String TABLE_FOLO = "records2";
 
     public static final String TABLE_FOLO_LEGACY = "records";
+
     // the attributes of abstract repository
     public static final String ALLOW_SNAPSHOTS = "allowSnapshots";
 

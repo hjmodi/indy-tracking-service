@@ -21,6 +21,7 @@ import io.smallrye.config.WithDefault;
 import io.smallrye.config.WithName;
 
 import javax.enterprise.context.ApplicationScoped;
+import java.io.File;
 import java.util.Optional;
 
 @Startup
@@ -34,6 +35,9 @@ public interface IndyTrackingConfiguration
 
     @WithName( "affectedGroupsExclude" )
     Optional<String> affectedGroupsExcludeFilter();
+
+    @WithName( "baseDir" )
+    File baseDir();
 
     @WithName( "data-storage" )
     Optional<String> storageType();

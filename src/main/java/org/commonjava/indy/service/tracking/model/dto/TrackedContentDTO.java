@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.commonjava.indy.service.tracking.dto;
+package org.commonjava.indy.service.tracking.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.commonjava.indy.service.tracking.model.TrackingKey;

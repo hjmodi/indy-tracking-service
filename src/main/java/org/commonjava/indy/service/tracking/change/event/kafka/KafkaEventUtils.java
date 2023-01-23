@@ -15,7 +15,7 @@
  */
 package org.commonjava.indy.service.tracking.change.event.kafka;
 
-import org.commonjava.event.store.IndyStoreEvent;
+import org.commonjava.indy.service.tracking.data.datafile.change.DataFileEvent;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.eclipse.microprofile.reactive.messaging.OnOverflow;
@@ -40,14 +40,14 @@ public class KafkaEventUtils
     @Channel( CHANNEL_STORE )
     @OnOverflow( value = OnOverflow.Strategy.BUFFER )
     @Inject
-    Emitter<IndyStoreEvent> eventEmitter;
+    Emitter<DataFileEvent> eventEmitter;
 
     @Channel( CHANNEL_INTERNAL )
     @OnOverflow( value = OnOverflow.Strategy.BUFFER )
     @Inject
-    Emitter<IndyStoreEvent> internalEventEmitter;
+    Emitter<DataFileEvent> internalEventEmitter;
 
-    public void fireEvent( IndyStoreEvent event )
+    public void fireEvent( DataFileEvent event )
     {
         logger.trace( "Firing event to internal: {}", event );
         handleEvent( internalEventEmitter, event, "Can not processing internal event." );
@@ -55,7 +55,7 @@ public class KafkaEventUtils
         handleEvent( eventEmitter, event, "Can not processing external event." );
     }
 
-    private void handleEvent( Emitter<IndyStoreEvent> emitter, IndyStoreEvent event, String message )
+    private void handleEvent( Emitter<DataFileEvent> emitter, DataFileEvent event, String message )
     {
         try
         {
