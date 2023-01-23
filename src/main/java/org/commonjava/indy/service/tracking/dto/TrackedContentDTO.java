@@ -16,7 +16,7 @@
 package org.commonjava.indy.service.tracking.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.commonjava.indy.service.tracking.TrackingKey;
+import org.commonjava.indy.service.tracking.model.TrackingKey;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 

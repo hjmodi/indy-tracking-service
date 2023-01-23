@@ -1,9 +1,8 @@
 package org.commonjava.indy.service.tracking.controller;
 
-import org.commonjava.indy.service.tracking.StoreKey;
-import org.commonjava.indy.service.tracking.TrackedContent;
-import org.commonjava.indy.service.tracking.TrackedContentEntry;
-import org.commonjava.indy.service.tracking.TrackingKey;
+import org.commonjava.indy.service.tracking.model.TrackedContent;
+import org.commonjava.indy.service.tracking.model.TrackedContentEntry;
+import org.commonjava.indy.service.tracking.model.TrackingKey;
 import org.commonjava.indy.service.tracking.config.IndyTrackingConfiguration;
 import org.commonjava.indy.service.tracking.dto.TrackedContentDTO;
 import org.commonjava.indy.service.tracking.dto.TrackedContentEntryDTO;

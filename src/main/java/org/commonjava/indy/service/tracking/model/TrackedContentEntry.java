@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.commonjava.indy.service.tracking;
-
-import org.commonjava.indy.service.tracking.model.AccessChannel;
+package org.commonjava.indy.service.tracking.model;
 
 import java.io.Externalizable;
 import java.io.IOException;

@@ -66,7 +66,7 @@ public class CassandraStoreDataManager
     private final Integer STORE_EXPIRATION_IN_MINS = 15;
 
     @Inject
-    CassandraStoreQuery storeQuery;
+    CassandraFoloRecord storeQuery;
 
     @Inject
     ObjectMapper objectMapper;
@@ -85,7 +85,7 @@ public class CassandraStoreDataManager
     {
     }
 
-    CassandraStoreDataManager( final CassandraStoreQuery storeQuery, final ObjectMapper objectMapper,
+    CassandraStoreDataManager( final CassandraFoloRecord storeQuery, final ObjectMapper objectMapper,
                                final CacheProducer cacheProducer )
     {
         this.storeQuery = storeQuery;
@@ -334,8 +334,8 @@ public class CassandraStoreDataManager
 
         DtxArtifactStore dtxArtifactStore = new DtxArtifactStore();
         dtxArtifactStore.setTypeKey(
-                        CassandraStoreUtil.getTypeKey( storeKey.getPackageType(), storeKey.getType().name() ) );
-        dtxArtifactStore.setNameHashPrefix( CassandraStoreUtil.getHashPrefix( storeKey.getName() ) );
+                        CassandraFoloUtil.getTypeKey( storeKey.getPackageType(), storeKey.getType().name() ) );
+        dtxArtifactStore.setNameHashPrefix( CassandraFoloUtil.getHashPrefix( storeKey.getName() ) );
         dtxArtifactStore.setPackageType( storeKey.getPackageType() );
         dtxArtifactStore.setStoreType( storeKey.getType().name() );
         dtxArtifactStore.setName( storeKey.getName() );
@@ -359,53 +359,52 @@ public class CassandraStoreDataManager
         if ( store instanceof AbstractRepository )
         {
             AbstractRepository repository = (AbstractRepository) store;
-            putValueIntoExtra( CassandraStoreUtil.ALLOW_SNAPSHOTS, repository.isAllowSnapshots(), extras );
-            putValueIntoExtra( CassandraStoreUtil.ALLOW_RELEASES, repository.isAllowReleases(), extras );
+            putValueIntoExtra( CassandraFoloUtil.ALLOW_SNAPSHOTS, repository.isAllowSnapshots(), extras );
+            putValueIntoExtra( CassandraFoloUtil.ALLOW_RELEASES, repository.isAllowReleases(), extras );
         }
         if ( store instanceof HostedRepository )
         {
             HostedRepository hostedRepository = (HostedRepository) store;
-            putValueIntoExtra( CassandraStoreUtil.STORAGE, hostedRepository.getStorage(), extras );
-            putValueIntoExtra( CassandraStoreUtil.READONLY, hostedRepository.isReadonly(), extras );
-            putValueIntoExtra( CassandraStoreUtil.SNAPSHOT_TIMEOUT_SECONDS,
-                               hostedRepository.getSnapshotTimeoutSeconds(), extras );
+            putValueIntoExtra( CassandraFoloUtil.STORAGE, hostedRepository.getStorage(), extras );
+            putValueIntoExtra( CassandraFoloUtil.READONLY, hostedRepository.isReadonly(), extras );
+            putValueIntoExtra( CassandraFoloUtil.SNAPSHOT_TIMEOUT_SECONDS, hostedRepository.getSnapshotTimeoutSeconds(),
+                               extras );
         }
         if ( store instanceof RemoteRepository )
         {
             RemoteRepository remoteRepository = (RemoteRepository) store;
-            putValueIntoExtra( CassandraStoreUtil.URL, remoteRepository.getUrl(), extras );
-            putValueIntoExtra( CassandraStoreUtil.HOST, remoteRepository.getHost(), extras );
-            putValueIntoExtra( CassandraStoreUtil.PORT, remoteRepository.getPort(), extras );
-            putValueIntoExtra( CassandraStoreUtil.USER, remoteRepository.getUser(), extras );
-            putValueIntoExtra( CassandraStoreUtil.PASSWORD, remoteRepository.getPassword(), extras );
-            putValueIntoExtra( CassandraStoreUtil.PROXY_HOST, remoteRepository.getProxyHost(), extras );
-            putValueIntoExtra( CassandraStoreUtil.PROXY_PORT, remoteRepository.getProxyPort(), extras );
-            putValueIntoExtra( CassandraStoreUtil.PROXY_USER, remoteRepository.getProxyUser(), extras );
-            putValueIntoExtra( CassandraStoreUtil.PROXY_PASSWORD, remoteRepository.getProxyPassword(), extras );
-            putValueIntoExtra( CassandraStoreUtil.KEY_CERT_PEM, remoteRepository.getKeyCertPem(), extras );
-            putValueIntoExtra( CassandraStoreUtil.KEY_PASSWORD, remoteRepository.getKeyPassword(), extras );
-            putValueIntoExtra( CassandraStoreUtil.SERVER_CERT_PEM, remoteRepository.getServerCertPem(), extras );
-            putValueIntoExtra( CassandraStoreUtil.PREFETCH_RESCAN_TIMESTAMP,
+            putValueIntoExtra( CassandraFoloUtil.URL, remoteRepository.getUrl(), extras );
+            putValueIntoExtra( CassandraFoloUtil.HOST, remoteRepository.getHost(), extras );
+            putValueIntoExtra( CassandraFoloUtil.PORT, remoteRepository.getPort(), extras );
+            putValueIntoExtra( CassandraFoloUtil.USER, remoteRepository.getUser(), extras );
+            putValueIntoExtra( CassandraFoloUtil.PASSWORD, remoteRepository.getPassword(), extras );
+            putValueIntoExtra( CassandraFoloUtil.PROXY_HOST, remoteRepository.getProxyHost(), extras );
+            putValueIntoExtra( CassandraFoloUtil.PROXY_PORT, remoteRepository.getProxyPort(), extras );
+            putValueIntoExtra( CassandraFoloUtil.PROXY_USER, remoteRepository.getProxyUser(), extras );
+            putValueIntoExtra( CassandraFoloUtil.PROXY_PASSWORD, remoteRepository.getProxyPassword(), extras );
+            putValueIntoExtra( CassandraFoloUtil.KEY_CERT_PEM, remoteRepository.getKeyCertPem(), extras );
+            putValueIntoExtra( CassandraFoloUtil.KEY_PASSWORD, remoteRepository.getKeyPassword(), extras );
+            putValueIntoExtra( CassandraFoloUtil.SERVER_CERT_PEM, remoteRepository.getServerCertPem(), extras );
+            putValueIntoExtra( CassandraFoloUtil.PREFETCH_RESCAN_TIMESTAMP,
                                remoteRepository.getPrefetchRescanTimestamp(), extras );
-            putValueIntoExtra( CassandraStoreUtil.METADATA_TIMEOUT_SECONDS,
-                               remoteRepository.getMetadataTimeoutSeconds(), extras );
-            putValueIntoExtra( CassandraStoreUtil.CACHE_TIMEOUT_SECONDS, remoteRepository.getCacheTimeoutSeconds(),
+            putValueIntoExtra( CassandraFoloUtil.METADATA_TIMEOUT_SECONDS, remoteRepository.getMetadataTimeoutSeconds(),
                                extras );
-            putValueIntoExtra( CassandraStoreUtil.TIMEOUT_SECONDS, remoteRepository.getTimeoutSeconds(), extras );
-            putValueIntoExtra( CassandraStoreUtil.MAX_CONNECTIONS, remoteRepository.getMaxConnections(), extras );
-            putValueIntoExtra( CassandraStoreUtil.NFC_TIMEOUT_SECONDS, remoteRepository.getNfcTimeoutSeconds(),
+            putValueIntoExtra( CassandraFoloUtil.CACHE_TIMEOUT_SECONDS, remoteRepository.getCacheTimeoutSeconds(),
                                extras );
-            putValueIntoExtra( CassandraStoreUtil.PASS_THROUGH, remoteRepository.isPassthrough(), extras );
-            putValueIntoExtra( CassandraStoreUtil.PREFETCH_RESCAN, remoteRepository.isPrefetchRescan(), extras );
-            putValueIntoExtra( CassandraStoreUtil.IGNORE_HOST_NAME_VERIFICATION,
+            putValueIntoExtra( CassandraFoloUtil.TIMEOUT_SECONDS, remoteRepository.getTimeoutSeconds(), extras );
+            putValueIntoExtra( CassandraFoloUtil.MAX_CONNECTIONS, remoteRepository.getMaxConnections(), extras );
+            putValueIntoExtra( CassandraFoloUtil.NFC_TIMEOUT_SECONDS, remoteRepository.getNfcTimeoutSeconds(), extras );
+            putValueIntoExtra( CassandraFoloUtil.PASS_THROUGH, remoteRepository.isPassthrough(), extras );
+            putValueIntoExtra( CassandraFoloUtil.PREFETCH_RESCAN, remoteRepository.isPrefetchRescan(), extras );
+            putValueIntoExtra( CassandraFoloUtil.IGNORE_HOST_NAME_VERIFICATION,
                                remoteRepository.isIgnoreHostnameVerification(), extras );
 
         }
         if ( store instanceof Group )
         {
             Group group = (Group) store;
-            putValueIntoExtra( CassandraStoreUtil.CONSTITUENTS, group.getConstituents(), extras );
-            putValueIntoExtra( CassandraStoreUtil.PREPEND_CONSTITUENT, group.isPrependConstituent(), extras );
+            putValueIntoExtra( CassandraFoloUtil.CONSTITUENTS, group.getConstituents(), extras );
+            putValueIntoExtra( CassandraFoloUtil.PREPEND_CONSTITUENT, group.isPrependConstituent(), extras );
         }
         return extras;
     }
@@ -458,21 +457,20 @@ public class CassandraStoreDataManager
             {
                 store = new HostedRepository( dtxArtifactStore.getPackageType(), dtxArtifactStore.getName() );
                 ( (HostedRepository) store ).setReadonly(
-                                readValueFromExtra( CassandraStoreUtil.READONLY, Boolean.class, extras ) );
+                                readValueFromExtra( CassandraFoloUtil.READONLY, Boolean.class, extras ) );
                 Integer snapshotTimeoutseconds =
-                                readIntValueFromExtra( CassandraStoreUtil.SNAPSHOT_TIMEOUT_SECONDS, extras );
+                                readIntValueFromExtra( CassandraFoloUtil.SNAPSHOT_TIMEOUT_SECONDS, extras );
                 if ( snapshotTimeoutseconds != null )
                 {
                     ( (HostedRepository) store ).setSnapshotTimeoutSeconds( snapshotTimeoutseconds );
                 }
-                ( (HostedRepository) store ).setStorage( readStrValueFromExtra( CassandraStoreUtil.STORAGE, extras ) );
-                Boolean allowReleases = readValueFromExtra( CassandraStoreUtil.ALLOW_RELEASES, Boolean.class, extras );
+                ( (HostedRepository) store ).setStorage( readStrValueFromExtra( CassandraFoloUtil.STORAGE, extras ) );
+                Boolean allowReleases = readValueFromExtra( CassandraFoloUtil.ALLOW_RELEASES, Boolean.class, extras );
                 if ( allowReleases != null )
                 {
                     ( (HostedRepository) store ).setAllowReleases( allowReleases );
                 }
-                Boolean allowSnapshots =
-                                readValueFromExtra( CassandraStoreUtil.ALLOW_SNAPSHOTS, Boolean.class, extras );
+                Boolean allowSnapshots = readValueFromExtra( CassandraFoloUtil.ALLOW_SNAPSHOTS, Boolean.class, extras );
                 if ( allowSnapshots != null )
                 {
                     ( (HostedRepository) store ).setAllowSnapshots( allowSnapshots );
@@ -481,89 +479,87 @@ public class CassandraStoreDataManager
             else if ( dtxArtifactStore.getStoreType().equals( remote.name() ) )
             {
                 store = new RemoteRepository( dtxArtifactStore.getPackageType(), dtxArtifactStore.getName(),
-                                              readStrValueFromExtra( CassandraStoreUtil.URL, extras ) );
+                                              readStrValueFromExtra( CassandraFoloUtil.URL, extras ) );
                 setIfNotNull( ( (RemoteRepository) store )::setUser,
-                              readStrValueFromExtra( CassandraStoreUtil.USER, extras ) );
+                              readStrValueFromExtra( CassandraFoloUtil.USER, extras ) );
                 setIfNotNull( ( (RemoteRepository) store )::setPassword,
-                              readStrValueFromExtra( CassandraStoreUtil.PASSWORD, extras ) );
+                              readStrValueFromExtra( CassandraFoloUtil.PASSWORD, extras ) );
                 setIfNotNull( ( (RemoteRepository) store )::setHost,
-                              readStrValueFromExtra( CassandraStoreUtil.HOST, extras ) );
+                              readStrValueFromExtra( CassandraFoloUtil.HOST, extras ) );
                 setIfNotNull( ( (RemoteRepository) store )::setProxyHost,
-                              readStrValueFromExtra( CassandraStoreUtil.PROXY_HOST, extras ) );
+                              readStrValueFromExtra( CassandraFoloUtil.PROXY_HOST, extras ) );
                 setIfNotNull( ( (RemoteRepository) store )::setServerCertPem,
-                              readStrValueFromExtra( CassandraStoreUtil.SERVER_CERT_PEM, extras ) );
+                              readStrValueFromExtra( CassandraFoloUtil.SERVER_CERT_PEM, extras ) );
                 setIfNotNull( ( (RemoteRepository) store )::setKeyCertPem,
-                              readStrValueFromExtra( CassandraStoreUtil.KEY_CERT_PEM, extras ) );
+                              readStrValueFromExtra( CassandraFoloUtil.KEY_CERT_PEM, extras ) );
                 setIfNotNull( ( (RemoteRepository) store )::setKeyPassword,
-                              readStrValueFromExtra( CassandraStoreUtil.KEY_PASSWORD, extras ) );
+                              readStrValueFromExtra( CassandraFoloUtil.KEY_PASSWORD, extras ) );
                 setIfNotNull( ( (RemoteRepository) store )::setProxyPassword,
-                              readStrValueFromExtra( CassandraStoreUtil.PROXY_PASSWORD, extras ) );
+                              readStrValueFromExtra( CassandraFoloUtil.PROXY_PASSWORD, extras ) );
                 setIfNotNull( ( (RemoteRepository) store )::setProxyUser,
-                              readStrValueFromExtra( CassandraStoreUtil.PROXY_USER, extras ) );
+                              readStrValueFromExtra( CassandraFoloUtil.PROXY_USER, extras ) );
                 setIfNotNull( ( (RemoteRepository) store )::setPrefetchRescanTimestamp,
-                              readStrValueFromExtra( CassandraStoreUtil.PREFETCH_RESCAN_TIMESTAMP, extras ) );
+                              readStrValueFromExtra( CassandraFoloUtil.PREFETCH_RESCAN_TIMESTAMP, extras ) );
 
-                Integer timeoutSeconds = readIntValueFromExtra( CassandraStoreUtil.TIMEOUT_SECONDS, extras );
+                Integer timeoutSeconds = readIntValueFromExtra( CassandraFoloUtil.TIMEOUT_SECONDS, extras );
                 if ( timeoutSeconds != null )
                 {
                     ( (RemoteRepository) store ).setTimeoutSeconds( timeoutSeconds );
                 }
                 Integer metadataTimeoutSeconds =
-                                readIntValueFromExtra( CassandraStoreUtil.METADATA_TIMEOUT_SECONDS, extras );
+                                readIntValueFromExtra( CassandraFoloUtil.METADATA_TIMEOUT_SECONDS, extras );
                 if ( metadataTimeoutSeconds != null )
                 {
                     ( (RemoteRepository) store ).setMetadataTimeoutSeconds( metadataTimeoutSeconds );
                 }
-                Integer cacheTimeoutSeconds = readIntValueFromExtra( CassandraStoreUtil.CACHE_TIMEOUT_SECONDS, extras );
+                Integer cacheTimeoutSeconds = readIntValueFromExtra( CassandraFoloUtil.CACHE_TIMEOUT_SECONDS, extras );
                 if ( cacheTimeoutSeconds != null )
                 {
                     ( (RemoteRepository) store ).setCacheTimeoutSeconds( cacheTimeoutSeconds );
                 }
-                Integer nfcTimeoutSeconds = readIntValueFromExtra( CassandraStoreUtil.NFC_TIMEOUT_SECONDS, extras );
+                Integer nfcTimeoutSeconds = readIntValueFromExtra( CassandraFoloUtil.NFC_TIMEOUT_SECONDS, extras );
                 if ( nfcTimeoutSeconds != null )
                 {
                     ( (RemoteRepository) store ).setNfcTimeoutSeconds( nfcTimeoutSeconds );
                 }
-                Integer maxConnections = readIntValueFromExtra( CassandraStoreUtil.MAX_CONNECTIONS, extras );
+                Integer maxConnections = readIntValueFromExtra( CassandraFoloUtil.MAX_CONNECTIONS, extras );
                 if ( maxConnections != null )
                 {
                     ( (RemoteRepository) store ).setMaxConnections( maxConnections );
                 }
-                Integer port = readIntValueFromExtra( CassandraStoreUtil.PORT, extras );
+                Integer port = readIntValueFromExtra( CassandraFoloUtil.PORT, extras );
                 if ( port != null )
                 {
                     ( (RemoteRepository) store ).setPort( port );
                 }
-                Integer proxyPort = readIntValueFromExtra( CassandraStoreUtil.PROXY_PORT, extras );
+                Integer proxyPort = readIntValueFromExtra( CassandraFoloUtil.PROXY_PORT, extras );
                 if ( proxyPort != null )
                 {
                     ( (RemoteRepository) store ).setProxyPort( proxyPort );
                 }
-                Boolean prefetchRescan =
-                                readValueFromExtra( CassandraStoreUtil.PREFETCH_RESCAN, Boolean.class, extras );
+                Boolean prefetchRescan = readValueFromExtra( CassandraFoloUtil.PREFETCH_RESCAN, Boolean.class, extras );
                 if ( prefetchRescan != null )
                 {
                     ( (RemoteRepository) store ).setPrefetchRescan( prefetchRescan );
                 }
-                Boolean passThrough = readValueFromExtra( CassandraStoreUtil.PASS_THROUGH, Boolean.class, extras );
+                Boolean passThrough = readValueFromExtra( CassandraFoloUtil.PASS_THROUGH, Boolean.class, extras );
                 if ( passThrough != null )
                 {
                     ( (RemoteRepository) store ).setPassthrough( passThrough );
                 }
                 Boolean ignoreHostnameVerification =
-                                readValueFromExtra( CassandraStoreUtil.IGNORE_HOST_NAME_VERIFICATION, Boolean.class,
+                                readValueFromExtra( CassandraFoloUtil.IGNORE_HOST_NAME_VERIFICATION, Boolean.class,
                                                     extras );
                 if ( ignoreHostnameVerification != null )
                 {
                     ( (RemoteRepository) store ).setIgnoreHostnameVerification( ignoreHostnameVerification );
                 }
-                Boolean allowReleases = readValueFromExtra( CassandraStoreUtil.ALLOW_RELEASES, Boolean.class, extras );
+                Boolean allowReleases = readValueFromExtra( CassandraFoloUtil.ALLOW_RELEASES, Boolean.class, extras );
                 if ( allowReleases != null )
                 {
                     ( (RemoteRepository) store ).setAllowReleases( allowReleases );
                 }
-                Boolean allowSnapshots =
-                                readValueFromExtra( CassandraStoreUtil.ALLOW_SNAPSHOTS, Boolean.class, extras );
+                Boolean allowSnapshots = readValueFromExtra( CassandraFoloUtil.ALLOW_SNAPSHOTS, Boolean.class, extras );
                 if ( allowSnapshots != null )
                 {
                     ( (RemoteRepository) store ).setAllowSnapshots( allowSnapshots );
@@ -572,13 +568,13 @@ public class CassandraStoreDataManager
             else if ( dtxArtifactStore.getStoreType().equals( StoreType.group.name() ) )
             {
                 List<String> constituentStrList =
-                                readValueFromExtra( CassandraStoreUtil.CONSTITUENTS, List.class, extras );
+                                readValueFromExtra( CassandraFoloUtil.CONSTITUENTS, List.class, extras );
                 List<StoreKey> constituentList =
                                 constituentStrList.stream().map( StoreKey::fromString ).collect( Collectors.toList() );
                 store = new Group( dtxArtifactStore.getPackageType(), dtxArtifactStore.getName(), constituentList );
 
                 Boolean prependConstituent =
-                                readValueFromExtra( CassandraStoreUtil.PREPEND_CONSTITUENT, Boolean.class, extras );
+                                readValueFromExtra( CassandraFoloUtil.PREPEND_CONSTITUENT, Boolean.class, extras );
                 if ( prependConstituent != null )
                 {
                     ( (Group) store ).setPrependConstituent( prependConstituent );

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.commonjava.indy.service.tracking;
+package org.commonjava.indy.service.tracking.model;
 
 public enum StoreEffect
 {

@@ -15,43 +15,12 @@
  */
 package org.commonjava.indy.service.tracking.data.cassandra;
 
-public class CassandraStoreUtil
+public class CassandraFoloUtil
 {
 
-    public static final String TABLE_STORE = "artifactstore";
+    public static final String TABLE_FOLO = "records2";
 
-    public static final String TABLE_AFFECTED_STORE = "affected_store";
-
-    public static final String PACKAGE_TYPE = "packageType";
-
-    public static final String STORE_TYPE = "storeType";
-
-    public static final String NAME_HASH_PREFIX = "nameHashPrefix";
-
-    public static final String NAME = "name";
-
-    public static final String DESCRIPTION = "description";
-
-    public static final String DISABLED = "disabled";
-
-    public static final String PATH_STYLE = "pathStyle";
-
-    public static final String TRANSIENT_METADATA = "transientMetadata";
-
-    public static final String METADATA = "metadata";
-
-    public static final String PATH_MASK_PATTERNS = "pathMaskPatterns";
-
-    public static final String CREATE_TIME = "createTime";
-
-    public static final String DISABLE_TIMEOUT = "disableTimeout";
-
-    public static final String RESCAN_IN_PROGRESS = "rescanInProgress";
-
-    public static final String AUTHORITATIVE_INDEX = "authoritativeIndex";
-
-    public static final String EXTRAS = "extras";
-
+    public static final String TABLE_FOLO_LEGACY = "records";
     // the attributes of abstract repository
     public static final String ALLOW_SNAPSHOTS = "allowSnapshots";
 
@@ -118,26 +87,22 @@ public class CassandraStoreUtil
 
     public static final int MODULO_VALUE = 10;
 
-    public static String getSchemaCreateTableStore( String keySpace )
+    public static String getSchemaCreateTableFolo( String keySpace )
     {
-        return "CREATE TABLE IF NOT EXISTS " + keySpace + "." + TABLE_STORE + " (" + "typekey varchar,"
-                        + "namehashprefix int," + "packagetype varchar," + "storetype varchar," + "name varchar,"
-                        + "description varchar," + "disabled boolean," + "pathstyle varchar,"
-                        + "transientmetadata map<text, text>," + "metadata map<text, text>,"
-                        + "pathmaskpatterns set<text>," + "createtime varchar," + "disabletimeout int,"
-                        + "authoritativeindex boolean," + "rescaninprogress boolean," + "extras map<text, text>,"
-                        + "PRIMARY KEY (( typekey, namehashprefix ), name )" + ");";
+        return "CREATE TABLE IF NOT EXISTS " + keySpace + "." + TABLE_FOLO + " (" + "tracking_key text,"
+                        + "sealed boolean," + "store_key text," + "access_channel text," + "path text,"
+                        + "origin_url text," + "local_url text," + "store_effect text," + "md5 text," + "sha256 text,"
+                        + "sha1 text," + "size bigint," + "started bigint," // started timestamp *
+                        + "timestamps set<bigint>," + "PRIMARY KEY ((tracking_key),store_key,path,store_effect)" + ");";
     }
 
-    public static String getSchemaCreateTableAffectedStore( String keyspace )
+    public static String getSchemaCreateTableFoloLegacy( String keySpace )
     {
-        return "CREATE TABLE IF NOT EXISTS " + keyspace + "." + TABLE_AFFECTED_STORE + " (" + "key varchar,"
-                        + "affectedStores set<text>," + "PRIMARY KEY ( key )" + ");";
-    }
-
-    public static String getSchemaCreateIndex4Store( String keyspace )
-    {
-        return "CREATE INDEX IF NOT EXISTS typekey_idx on " + keyspace + "." + TABLE_STORE + " (typekey)";
+        return "CREATE TABLE IF NOT EXISTS " + keySpace + "." + TABLE_FOLO_LEGACY + " (" + "tracking_key text,"
+                        + "sealed boolean," + "store_key text," + "access_channel text," + "path text,"
+                        + "origin_url text," + "local_url text," + "store_effect text," + "md5 text," + "sha256 text,"
+                        + "sha1 text," + "size bigint," + "started bigint," // started timestamp *
+                        + "timestamps set<bigint>," + "PRIMARY KEY ((tracking_key),store_key,path,store_effect)" + ");";
     }
 
     public static int getHashPrefix( final String name )

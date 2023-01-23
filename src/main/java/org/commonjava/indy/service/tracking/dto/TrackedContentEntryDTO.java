@@ -15,8 +15,8 @@
  */
 package org.commonjava.indy.service.tracking.dto;
 
-import org.commonjava.indy.service.tracking.StoreKey;
 import org.commonjava.indy.service.tracking.model.AccessChannel;
+import org.commonjava.indy.service.tracking.model.StoreKey;
 
 import java.util.Set;
 

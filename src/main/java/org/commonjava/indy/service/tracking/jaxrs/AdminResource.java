@@ -16,7 +16,7 @@
 package org.commonjava.indy.service.tracking.jaxrs;
 
 import org.commonjava.event.common.EventMetadata;
-import org.commonjava.indy.service.tracking.TrackingKey;
+import org.commonjava.indy.service.tracking.model.TrackingKey;
 import org.commonjava.indy.service.tracking.controller.AdminController;
 import org.commonjava.indy.service.tracking.controller.Constants;
 import org.commonjava.indy.service.tracking.dto.TrackedContentDTO;

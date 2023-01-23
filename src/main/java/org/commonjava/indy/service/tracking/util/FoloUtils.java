@@ -15,7 +15,7 @@
  */
 package org.commonjava.indy.service.tracking.util;
 
-import org.commonjava.indy.service.tracking.TrackedContent;
+import org.commonjava.indy.service.tracking.model.TrackedContent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
