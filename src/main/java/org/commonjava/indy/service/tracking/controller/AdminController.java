@@ -43,6 +43,7 @@ import java.util.zip.ZipOutputStream;
 
 import static org.apache.commons.io.IOUtils.closeQuietly;
 import static org.apache.commons.io.IOUtils.copy;
+import static org.commonjava.indy.service.tracking.Constants.TRACKING_TYPE.SEALED;
 import static org.commonjava.indy.service.tracking.util.FoloUtils.backupTrackedContent;
 import static org.commonjava.indy.service.tracking.util.FoloUtils.readZipInputStreamAnd;
 import static org.commonjava.indy.service.tracking.util.FoloUtils.zipTrackedContent;
@@ -62,31 +63,17 @@ public class AdminController
     @Inject
     private FoloFiler filer;
 
-    @Inject
-    private ContentManager contentManager;
-
-    @Inject
-    private ContentDigester contentDigester;
-
-    @Inject
-    @WeftManaged
-    @ExecutorConfig( threads = 50, priority = 4, named = "folo-recalculator", maxLoadFactor = 100, loadSensitive = ExecutorConfig.BooleanLiteral.TRUE )
-    private WeftExecutorService recalculationExecutor;
 
     protected AdminController()
     {
     }
 
     public AdminController( final IndyTrackingConfiguration config, final FoloRecordCache recordManager,
-                            final FoloFiler filer, final ContentManager contentManager,
-                            final ContentDigester contentDigester )
+                            final FoloFiler filer )
     {
         this.config = config;
         this.recordManager = recordManager;
         this.filer = filer;
-        this.contentManager = contentManager;
-        this.contentDigester = contentDigester;
-        this.recalculationExecutor = new SingleThreadedExecutorService( "folo-recalculator" );
     }
 
     public TrackedContentDTO seal( final String id, final String baseUrl )

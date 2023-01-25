@@ -66,7 +66,7 @@ public class CassandraStoreDataManager
     private final Integer STORE_EXPIRATION_IN_MINS = 15;
 
     @Inject
-    CassandraFoloRecord storeQuery;
+    CassandraFoloRecord recordQuery;
 
     @Inject
     ObjectMapper objectMapper;
@@ -88,7 +88,7 @@ public class CassandraStoreDataManager
     CassandraStoreDataManager( final CassandraFoloRecord storeQuery, final ObjectMapper objectMapper,
                                final CacheProducer cacheProducer )
     {
-        this.storeQuery = storeQuery;
+        this.recordQuery = storeQuery;
         this.objectMapper = objectMapper;
         this.cacheProducer = cacheProducer;
     }
@@ -124,8 +124,8 @@ public class CassandraStoreDataManager
 
         logger.trace( "Remove artifact store: {}", key.toString() );
 
-        DtxArtifactStore dtxArtifactStore =
-                        storeQuery.removeArtifactStore( key.getPackageType(), key.getType(), key.getName() );
+        DtxTrackingRecord dtxArtifactStore =
+                        recordQuery.removeArtifactStore( key.getPackageType(), key.getType(), key.getName() );
         return toArtifactStore( dtxArtifactStore );
     }
 
@@ -139,7 +139,7 @@ public class CassandraStoreDataManager
     //    @WithSpan
     public Set<ArtifactStore> getAllArtifactStores()
     {
-        Set<DtxArtifactStore> dtxArtifactStoreSet = storeQuery.getAllArtifactStores();
+        Set<DtxTrackingRecord> dtxArtifactStoreSet = recordQuery.getAllArtifactStores();
         Set<ArtifactStore> artifactStoreSet = new HashSet<>();
         dtxArtifactStoreSet.forEach( dtxArtifactStore -> artifactStoreSet.add( toArtifactStore( dtxArtifactStore ) ) );
         return artifactStoreSet;
@@ -174,7 +174,7 @@ public class CassandraStoreDataManager
 
         logger.trace( "Get storeKeys: {}/{}", pkg, type );
 
-        Set<DtxArtifactStore> dtxArtifactStoreSet = storeQuery.getArtifactStoresByPkgAndType( pkg, type );
+        Set<DtxTrackingRecord> dtxArtifactStoreSet = recordQuery.getArtifactStoresByPkgAndType( pkg, type );
         Set<StoreKey> storeKeySet = new HashSet<>();
         dtxArtifactStoreSet.forEach(
                         dtxArtifactStore -> storeKeySet.add( new StoreKey( pkg, type, dtxArtifactStore.getName() ) ) );
@@ -187,7 +187,7 @@ public class CassandraStoreDataManager
 
         logger.trace( "Get stores: {}/{}", pkg, type );
 
-        Set<DtxArtifactStore> dtxArtifactStoreSet = storeQuery.getArtifactStoresByPkgAndType( pkg, type );
+        Set<DtxTrackingRecord> dtxArtifactStoreSet = recordQuery.getArtifactStoresByPkgAndType( pkg, type );
         Set<ArtifactStore> storeSet = new HashSet<>();
         dtxArtifactStoreSet.forEach( dtxArtifactStore -> storeSet.add( toArtifactStore( dtxArtifactStore ) ) );
         return storeSet;
@@ -208,12 +208,12 @@ public class CassandraStoreDataManager
     @Override
     public boolean isEmpty()
     {
-        return storeQuery.isEmpty();
+        return recordQuery.isEmpty();
     }
 
     public boolean isAffectedEmpty()
     {
-        return storeQuery.isAffectedEmpty();
+        return recordQuery.isAffectedEmpty();
     }
 
     @Override
@@ -225,8 +225,8 @@ public class CassandraStoreDataManager
     @Override
     protected ArtifactStore putArtifactStoreInternal( StoreKey storeKey, ArtifactStore store )
     {
-        DtxArtifactStore dtxArtifactStore = toDtxArtifactStore( storeKey, store );
-        storeQuery.createDtxArtifactStore( dtxArtifactStore );
+        DtxTrackingRecord dtxArtifactStore = toDtxTrackingRecord( storeKey, store );
+        recordQuery.createDtxTrackingRecord( dtxArtifactStore );
 
         return computeIfAbsent( ARTIFACT_STORE, storeKey, STORE_EXPIRATION_IN_MINS, Boolean.TRUE );
     }
@@ -252,7 +252,7 @@ public class CassandraStoreDataManager
 
             if ( processed.add( key ) )
             {
-                DtxAffectedStore affectedStore = storeQuery.getAffectedStore( key );
+                DtxAffectedStore affectedStore = recordQuery.getAffectedStore( key );
                 if ( affectedStore == null )
                 {
                     processed.add( key );
@@ -308,19 +308,19 @@ public class CassandraStoreDataManager
     @Override
     protected void removeAffectedStore( StoreKey key )
     {
-        storeQuery.removeAffectedStore( key );
+        recordQuery.removeAffectedStore( key );
     }
 
     @Override
     protected void removeAffectedBy( StoreKey key, StoreKey affected )
     {
-        storeQuery.removeAffectedBy( key, affected );
+        recordQuery.removeAffectedBy( key, affected );
     }
 
     @Override
     protected void addAffectedBy( StoreKey key, StoreKey affected )
     {
-        storeQuery.addAffectedBy( key, affected );
+        recordQuery.addAffectedBy( key, affected );
     }
 
     public void initAffectedBy()
@@ -329,10 +329,10 @@ public class CassandraStoreDataManager
         allStores.stream().filter( s -> group == s.getType() ).forEach( s -> refreshAffectedBy( s, null, STORE ) );
     }
 
-    private DtxArtifactStore toDtxArtifactStore( StoreKey storeKey, ArtifactStore store )
+    private DtxTrackingRecord toDtxTrackingRecord( StoreKey storeKey, ArtifactStore store )
     {
 
-        DtxArtifactStore dtxArtifactStore = new DtxArtifactStore();
+        DtxTrackingRecord dtxArtifactStore = new DtxTrackingRecord();
         dtxArtifactStore.setTypeKey(
                         CassandraFoloUtil.getTypeKey( storeKey.getPackageType(), storeKey.getType().name() ) );
         dtxArtifactStore.setNameHashPrefix( CassandraFoloUtil.getHashPrefix( storeKey.getName() ) );
@@ -424,7 +424,7 @@ public class CassandraStoreDataManager
         }
     }
 
-    private ArtifactStore toArtifactStore( final DtxArtifactStore dtxArtifactStore )
+    private ArtifactStore toArtifactStore( final DtxTrackingRecord dtxArtifactStore )
     {
         if ( dtxArtifactStore == null )
         {
@@ -447,7 +447,7 @@ public class CassandraStoreDataManager
     }
 
     @SuppressWarnings( "unchecked" )
-    private ArtifactStore generateStore( DtxArtifactStore dtxArtifactStore )
+    private ArtifactStore generateStore( DtxTrackingRecord dtxArtifactStore )
     {
         ArtifactStore store = null;
         if ( dtxArtifactStore.getExtras() != null && !dtxArtifactStore.getExtras().isEmpty() )
@@ -641,8 +641,8 @@ public class CassandraStoreDataManager
         {
             logger.trace( "Entry not found, run put, expirationMins: {}", expirationMins );
 
-            DtxArtifactStore dtxArtifactStore =
-                            storeQuery.getArtifactStore( key.getPackageType(), key.getType(), key.getName() );
+            DtxTrackingRecord dtxArtifactStore =
+                            recordQuery.getArtifactStore( key.getPackageType(), key.getType(), key.getName() );
 
             store = toArtifactStore( dtxArtifactStore );
             if ( store != null )
