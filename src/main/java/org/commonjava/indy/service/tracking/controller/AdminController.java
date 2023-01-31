@@ -46,6 +46,12 @@ public class AdminController
         this.filer = filer;
     }
 
+    public TrackedContentDTO seal( final String id, final String baseUrl )
+    {
+        TrackingKey tk = new TrackingKey( id );
+        return constructContentDTO( recordManager.seal( tk ), baseUrl );
+    }
+
     public TrackedContentDTO getRecord( final String id, String baseUrl ) throws IndyWorkflowException
     {
         final TrackingKey tk = new TrackingKey( id );
