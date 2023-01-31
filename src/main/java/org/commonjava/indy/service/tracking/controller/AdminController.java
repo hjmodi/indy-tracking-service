@@ -18,10 +18,14 @@ import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+
+import static org.commonjava.indy.service.tracking.util.TrackingUtils.zipTrackedContent;
 
 @ApplicationScoped
 public class AdminController
@@ -54,6 +58,28 @@ public class AdminController
     {
         TrackingKey tk = new TrackingKey( id );
         return constructContentDTO( recordManager.seal( tk ), baseUrl );
+    }
+
+    public File renderReportZip() throws IndyWorkflowException
+    {
+        Set<TrackedContent> sealed = recordManager.getSealed(); // only care about sealed records
+        try
+        {
+            File file = filer.getSealedZipFile().getDetachedFile();
+            if ( file.exists() )
+            {
+                file.delete();
+            }
+            file.getParentFile().mkdirs(); // make dirs if not exist
+
+            zipTrackedContent( file, sealed );
+
+            return file;
+        }
+        catch ( IOException e )
+        {
+            throw new IndyWorkflowException("Failed to create zip file", e);
+        }
     }
 
     public TrackedContentDTO getRecord( final String id, String baseUrl ) throws IndyWorkflowException
