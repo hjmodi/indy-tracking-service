@@ -21,7 +21,6 @@ import org.commonjava.event.store.EventStoreKey;
 import org.commonjava.event.store.IndyStoreEvent;
 import org.commonjava.event.store.StoreEventType;
 import org.commonjava.indy.service.tracking.audit.ChangeSummary;
-import org.commonjava.indy.service.tracking.data.StoreDataManager;
 import org.commonjava.indy.service.tracking.exception.IndyDataException;
 import org.commonjava.indy.service.tracking.model.Group;
 import org.commonjava.indy.service.tracking.model.StoreKey;

@@ -16,7 +16,6 @@
 package org.commonjava.indy.service.tracking.data.metrics;
 
 import org.commonjava.indy.service.tracking.data.ArtifactStoreQuery;
-import org.commonjava.indy.service.tracking.data.StoreDataManager;
 import org.commonjava.indy.service.tracking.exception.IndyDataException;
 import org.commonjava.indy.service.tracking.model.ArtifactStore;
 import org.commonjava.indy.service.tracking.model.Group;

@@ -1,10 +1,11 @@
 package org.commonjava.indy.service.tracking.controller;
 
-import org.commonjava.event.common.EventMetadata;
+import org.commonjava.event.file.FileEvent.;
 import org.commonjava.indy.service.tracking.Constants;
 import org.commonjava.indy.service.tracking.config.IndyTrackingConfiguration;
 import org.commonjava.indy.service.tracking.data.FoloFiler;
 import org.commonjava.indy.service.tracking.data.cassandra.CassandraFoloRecord;
+import org.commonjava.indy.service.tracking.data.infinispan.FoloRecordCache;
 import org.commonjava.indy.service.tracking.exception.ContentException;
 import org.commonjava.indy.service.tracking.exception.IndyWorkflowException;
 import org.commonjava.indy.service.tracking.model.AccessChannel;
@@ -131,92 +132,93 @@ public class AdminController
         }
     }
 
-    public File renderRepositoryZip( final String id ) throws IndyWorkflowException
-    {
-        final TrackingKey tk = new TrackingKey( id );
-
-        File file = filer.getRepositoryZipFile( tk ).getDetachedFile();
-        file.getParentFile().mkdirs();
-        logger.debug( "Retrieving tracking record for: {}", tk );
-        final TrackedContent record = recordManager.get( tk );
-        logger.debug( "Got: {}", record );
-
-        if ( record == null )
-        {
-            throw new IndyWorkflowException( ApplicationStatus.NOT_FOUND.code(),
-                                             "No tracking record available for: %s. Maybe you forgot to seal it?", tk );
-        }
-
-        final Set<String> seenPaths = new HashSet<>();
-        final List<Transfer> items = new ArrayList<>();
-
-        addTransfers( record.getUploads(), items, id, seenPaths );
-        addTransfers( record.getDownloads(), items, id, seenPaths );
-
-        logger.debug( "Retrieved {} files. Creating zip.", items.size() );
-
-        Collections.sort( items, ( f, s ) -> f.getPath().compareTo( s.getPath() ) );
-
-        try (ZipOutputStream stream = new ZipOutputStream( new FileOutputStream( file ) ))
-        {
-            for ( final Transfer item : items )
-            {
-                // logger.info( "Adding: {}", item );
-                if ( item != null )
-                {
-                    final String path = item.getPath();
-                    final ZipEntry ze = new ZipEntry( path );
-                    stream.putNextEntry( ze );
-
-                    InputStream itemStream = null;
-                    try
-                    {
-                        itemStream = item.openInputStream();
-                        copy( itemStream, stream );
-                    }
-                    finally
-                    {
-                        closeQuietly( itemStream );
-                    }
-                }
-            }
-        }
-        catch ( final IOException e )
-        {
-            throw new IndyWorkflowException( "Failed to generate repository zip from tracking record: {}. Reason: {}",
-                                             e, id, e.getMessage() );
-        }
-
-        return file;
-    }
-
-    private void addTransfers( final Set<TrackedContentEntry> entries, final List<Transfer> items,
-                               final String trackingId, final Set<String> seenPaths ) throws IndyWorkflowException
-    {
-        if ( entries != null && !entries.isEmpty() )
-        {
-            for ( final TrackedContentEntry entry : entries )
-            {
-                final String path = entry.getPath();
-                if ( path == null || seenPaths.contains( path ) )
-                {
-                    continue;
-                }
-                final StoreKey sk = entry.getStoreKey();
-                Transfer transfer = contentManager.getTransfer( sk, path, TransferOperation.DOWNLOAD );
-                if ( transfer == null )
-                {
-                    Logger logger = LoggerFactory.getLogger( getClass() );
-                    logger.warn( "While creating Folo repo zip for: {}, cannot find: {} in: {}", trackingId, path, sk );
-                }
-                else
-                {
-                    seenPaths.add( path );
-                    items.add( transfer );
-                }
-            }
-        }
-    }
+    // TODO make this a single REST call to indy content API and implement this within indy
+//    public File renderRepositoryZip( final String id ) throws IndyWorkflowException
+//    {
+//        final TrackingKey tk = new TrackingKey( id );
+//
+//        File file = filer.getRepositoryZipFile( tk ).getDetachedFile();
+//        file.getParentFile().mkdirs();
+//        logger.debug( "Retrieving tracking record for: {}", tk );
+//        final TrackedContent record = recordManager.get( tk );
+//        logger.debug( "Got: {}", record );
+//
+//        if ( record == null )
+//        {
+//            throw new IndyWorkflowException( ApplicationStatus.NOT_FOUND.code(),
+//                                             "No tracking record available for: %s. Maybe you forgot to seal it?", tk );
+//        }
+//
+//        final Set<String> seenPaths = new HashSet<>();
+//        final List<Transfer> items = new ArrayList<>();
+//
+//        addTransfers( record.getUploads(), items, id, seenPaths );
+//        addTransfers( record.getDownloads(), items, id, seenPaths );
+//
+//        logger.debug( "Retrieved {} files. Creating zip.", items.size() );
+//
+//        Collections.sort( items, ( f, s ) -> f.getPath().compareTo( s.getPath() ) );
+//
+//        try (ZipOutputStream stream = new ZipOutputStream( new FileOutputStream( file ) ))
+//        {
+//            for ( final Transfer item : items )
+//            {
+//                // logger.info( "Adding: {}", item );
+//                if ( item != null )
+//                {
+//                    final String path = item.getPath();
+//                    final ZipEntry ze = new ZipEntry( path );
+//                    stream.putNextEntry( ze );
+//
+//                    InputStream itemStream = null;
+//                    try
+//                    {
+//                        itemStream = item.openInputStream();
+//                        copy( itemStream, stream );
+//                    }
+//                    finally
+//                    {
+//                        closeQuietly( itemStream );
+//                    }
+//                }
+//            }
+//        }
+//        catch ( final IOException e )
+//        {
+//            throw new IndyWorkflowException( "Failed to generate repository zip from tracking record: {}. Reason: {}",
+//                                             e, id, e.getMessage() );
+//        }
+//
+//        return file;
+//    }
+//
+//    private void addTransfers( final Set<TrackedContentEntry> entries, final List<Transfer> items,
+//                               final String trackingId, final Set<String> seenPaths ) throws IndyWorkflowException
+//    {
+//        if ( entries != null && !entries.isEmpty() )
+//        {
+//            for ( final TrackedContentEntry entry : entries )
+//            {
+//                final String path = entry.getPath();
+//                if ( path == null || seenPaths.contains( path ) )
+//                {
+//                    continue;
+//                }
+//                final StoreKey sk = entry.getStoreKey();
+//                Transfer transfer = contentManager.getTransfer( sk, path, TransferOperation.DOWNLOAD );
+//                if ( transfer == null )
+//                {
+//                    Logger logger = LoggerFactory.getLogger( getClass() );
+//                    logger.warn( "While creating Folo repo zip for: {}, cannot find: {} in: {}", trackingId, path, sk );
+//                }
+//                else
+//                {
+//                    seenPaths.add( path );
+//                    items.add( transfer );
+//                }
+//            }
+//        }
+//    }
 
     public TrackedContentDTO getRecord( final String id, String baseUrl ) throws IndyWorkflowException
     {
