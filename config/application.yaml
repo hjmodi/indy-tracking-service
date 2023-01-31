@@ -106,6 +106,7 @@ indy_security:
   security_bindings_yaml: config/security-bindings.yaml
 
 tracking:
+  baseDir: "data"
   data-storage: cassandra
 
 kafka:
