@@ -278,6 +278,11 @@
             <version>2.0</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.commonjava.cdi.util</groupId>
+            <artifactId>weft</artifactId>
+            <version>1.19</version>
+        </dependency>
     </dependencies>
 
     <build>
