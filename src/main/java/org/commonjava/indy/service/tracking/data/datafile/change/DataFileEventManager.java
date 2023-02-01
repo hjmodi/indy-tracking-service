@@ -16,7 +16,7 @@
 package org.commonjava.indy.service.tracking.data.datafile.change;
 
 import org.commonjava.indy.service.tracking.audit.ChangeSummary;
-import org.commonjava.indy.service.tracking.change.event.kafka.KafkaEventUtils;
+import org.commonjava.indy.service.tracking.client.kafka.KafkaEventDispatcher;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -30,7 +30,7 @@ public class DataFileEventManager
 {
 
     @Inject
-    KafkaEventUtils kafkaEvent;
+    KafkaEventDispatcher kafkaEvent;
 
     public void fire( final DataFileEvent evt )
     {

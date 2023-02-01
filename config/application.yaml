@@ -106,7 +106,11 @@ indy_security:
   security_bindings_yaml: config/security-bindings.yaml
 
 tracking:
+  baseDir: "data"
   data-storage: cassandra
+
+content-service-api/mp-rest/url: http://localhost
+content-service-api/mp-rest/scope: javax.inject.Singleton
 
 kafka:
   bootstrap:
