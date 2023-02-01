@@ -17,6 +17,7 @@ package org.commonjava.indy.service.tracking.jaxrs;
 
 import org.commonjava.indy.service.tracking.Constants;
 import org.commonjava.indy.service.tracking.client.content.BatchDeleteRequest;
+import org.commonjava.indy.service.tracking.client.content.ContentService;
 import org.commonjava.indy.service.tracking.client.content.MaintenanceService;
 import org.commonjava.indy.service.tracking.controller.AdminController;
 import org.commonjava.indy.service.tracking.exception.ContentException;
@@ -78,6 +79,10 @@ public class AdminResource
     MaintenanceService maintenanceService;
 
     @Inject
+    @RestClient
+    ContentService contentService;
+
+    @Inject
     private AdminController controller;
 
     @Inject
@@ -93,14 +98,10 @@ public class AdminResource
     @Path( "/{id}/record/recalculate" )
     @GET
     public Response recalculateRecord(
-                    @Parameter( description = "User-assigned tracking session key", in = PATH, required = true ) @PathParam( "id" ) final String id )
+                    @Parameter( description = "User-assigned tracking session key", in = PATH, required = true ) @PathParam( "id" ) final String id,
+                    @Context final UriInfo uriInfo )
     {
-        Response response;
-
-        logger.info( "id is: {}", id );
-
-        response = Response.ok().build();
-        return response;
+        return contentService.recalculateRecord( id );
     }
 
     @Operation( description = "Retrieve the content referenced in a tracking record as a ZIP-compressed Maven repository directory." )
