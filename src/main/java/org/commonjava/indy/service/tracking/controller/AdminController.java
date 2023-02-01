@@ -1,6 +1,22 @@
+/**
+ * Copyright (C) 2023 Red Hat, Inc. (https://github.com/Commonjava/indy-tracking-service)
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.commonjava.indy.service.tracking.controller;
 
 import org.commonjava.indy.service.tracking.Constants;
+import org.commonjava.indy.service.tracking.client.content.ContentService;
 import org.commonjava.indy.service.tracking.config.IndyTrackingConfiguration;
 import org.commonjava.indy.service.tracking.data.cassandra.CassandraTrackingQuery;
 import org.commonjava.indy.service.tracking.exception.ContentException;
@@ -10,13 +26,16 @@ import org.commonjava.indy.service.tracking.model.TrackedContentEntry;
 import org.commonjava.indy.service.tracking.model.TrackingKey;
 import org.commonjava.indy.service.tracking.model.dto.TrackedContentDTO;
 import org.commonjava.indy.service.tracking.model.dto.TrackedContentEntryDTO;
+import org.commonjava.indy.service.tracking.model.dto.TrackedContentEntrySetDTO;
 import org.commonjava.indy.service.tracking.model.dto.TrackingIdsDTO;
 import org.commonjava.indy.service.tracking.util.UrlUtils;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,6 +43,7 @@ import java.net.MalformedURLException;
 import java.nio.file.Paths;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static org.commonjava.indy.service.tracking.util.TrackingUtils.readZipInputStreamAnd;
@@ -37,6 +57,10 @@ public class AdminController
     public static final String FOLO_SEALED_ZIP = "folo-sealed.zip";
 
     private final Logger logger = LoggerFactory.getLogger( getClass() );
+
+    @Inject
+    @RestClient
+    ContentService contentService;
 
     @Inject
     private IndyTrackingConfiguration config;
@@ -206,6 +230,40 @@ public class AdminController
             return new TrackingIdsDTO( inProgress, sealed );
         }
         return null;
+    }
+
+    public TrackedContentDTO recalculateRecord( final String id, final String baseUrl ) throws IndyWorkflowException
+    {
+        TrackingKey trackingKey = new TrackingKey( id );
+        TrackedContent record = recordManager.get( trackingKey );
+
+        AtomicBoolean failed = new AtomicBoolean( false );
+
+        Set<TrackedContentEntry> recalculatedUploads = recalculateEntrySet( record.getUploads(), id, failed );
+        Set<TrackedContentEntry> recalculatedDownloads = null;
+        if ( !failed.get() )
+        {
+            recalculatedDownloads = recalculateEntrySet( record.getDownloads(), id, failed );
+        }
+
+        if ( failed.get() )
+        {
+            throw new IndyWorkflowException(
+                            "Failed to recalculate tracking record: %s. See Indy logs for more information", id );
+        }
+
+        TrackedContent recalculated = new TrackedContent( record.getKey(), recalculatedUploads, recalculatedDownloads );
+        recordManager.replaceTrackingRecord( recalculated );
+
+        return constructContentDTO( recalculated, baseUrl );
+    }
+
+    private Set<TrackedContentEntry> recalculateEntrySet( final Set<TrackedContentEntry> entries, final String id,
+                                                          final AtomicBoolean failed ) throws IndyWorkflowException
+    {
+
+        Response response = contentService.recalculateEntrySet( entries );
+        return response.readEntity( TrackedContentEntrySetDTO.class ).entries;
     }
 
 }
