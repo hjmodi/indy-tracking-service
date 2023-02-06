@@ -46,10 +46,6 @@ public interface IndyTrackingConfiguration
     @WithDefault( "false" )
     Boolean storeValidationEnabled();
 
-    @WithName( "query.cache.enabled" )
-    @WithDefault( "false" )
-    Boolean queryCacheEnabled();
-
     @WithName( "track.group.content" )
     Boolean trackGroupContent();
 

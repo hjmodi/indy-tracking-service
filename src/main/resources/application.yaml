@@ -97,6 +97,9 @@ cassandra:
     tracking:
         baseDir: "data"
         data-storage: cassandra
+        track:
+            group:
+                content: true
 
     kafka:
         bootstrap:
