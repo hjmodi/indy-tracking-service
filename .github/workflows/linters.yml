@@ -1,0 +1,15 @@
+name: Linters
+
+on:
+  pull_request:
+
+  push:
+    branches:
+      - master
+      - release_*
+
+jobs:
+  coveralls:
+  - name: Coveralls GitHub Action
+    uses: coverallsapp/github-action@1.1.3
+
