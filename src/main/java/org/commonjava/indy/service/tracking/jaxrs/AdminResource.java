@@ -83,8 +83,9 @@ public class AdminResource
     @Inject
     private ResponseHelper responseHelper;
 
-    public AdminResource()
+    public AdminResource(ResponseHelper responseHelper)
     {
+        this.responseHelper = responseHelper;
     }
 
     @Operation( description = "Recalculate sizes and checksums for every file listed in a tracking record." )
@@ -365,15 +366,6 @@ public class AdminResource
         }
 
         return maintenanceService.doDelete( request );
-    }
-
-    @Operation( description = "Import folo from ISPN cache to Cassandra." )
-    @APIResponse( responseCode = "201", description = "Import folo from ISPN cache to Cassandra." )
-    @Path( "/report/importToCassandra" )
-    @PUT
-    public Response importFoloToCassandra( final @Context UriInfo uriInfo, final @Context HttpServletRequest request )
-    {
-        return Response.created( uriInfo.getRequestUri() ).build();
     }
 
 }
