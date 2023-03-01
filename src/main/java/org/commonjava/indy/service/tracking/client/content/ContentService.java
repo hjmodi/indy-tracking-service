@@ -16,6 +16,7 @@
 package org.commonjava.indy.service.tracking.client.content;
 
 import org.commonjava.indy.service.tracking.client.CustomClientRequestFilter;
+import org.commonjava.indy.service.tracking.model.TrackedContent;
 import org.commonjava.indy.service.tracking.model.dto.ContentTransferDTO;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
@@ -23,6 +24,7 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
+import java.io.File;
 import java.util.Set;
 
 @Path( "/api/admin/content" )
@@ -33,5 +35,9 @@ public interface ContentService
     @POST
     @Path( "/tracking/recalculate" )
     Response recalculateEntrySet( final Set<ContentTransferDTO> entries );
+
+    @POST
+    @Path( "/repo/zip" )
+    File getZipRepository( final TrackedContent record );
 
 }
