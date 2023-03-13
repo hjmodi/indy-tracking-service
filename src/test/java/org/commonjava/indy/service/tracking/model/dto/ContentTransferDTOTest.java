@@ -8,6 +8,7 @@ import org.commonjava.indy.service.tracking.model.StoreType;
 import org.commonjava.indy.service.tracking.model.TrackingKey;
 import org.junit.jupiter.api.Test;
 
+import static org.commonjava.indy.service.tracking.model.pkg.PackageTypeConstants.PKG_TYPE_MAVEN;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -91,13 +92,13 @@ public class ContentTransferDTOTest
         assertEquals( "hi!", storeKey9.getName() );
         assertEquals( "maven", storeKey9.getPackageType() );
         StoreType storeType10 = storeKey9.getType();
-        StoreKey storeKey13 = new StoreKey( "", storeType10, "maven:remote:hi!" );
+        StoreKey storeKey13 = new StoreKey( PKG_TYPE_MAVEN, storeType10, "maven:remote:hi!" );
         assertEquals( "maven:remote:hi!", storeKey13.getName() );
-        assertEquals( "", storeKey13.getPackageType() );
+        assertEquals( PKG_TYPE_MAVEN, storeKey13.getPackageType() );
         StoreType storeType14 = storeKey13.getType();
-        StoreKey storeKey17 = new StoreKey( ":remote:hi!", storeType14, "" );
+        StoreKey storeKey17 = new StoreKey( PKG_TYPE_MAVEN, storeType14, "" );
         assertEquals( "", storeKey17.getName() );
-        assertEquals( ":remote:hi!", storeKey17.getPackageType() );
+        assertEquals( PKG_TYPE_MAVEN, storeKey17.getPackageType() );
         boolean boolean18 = contentTransferDTO7.equals( storeKey17 );
         assertFalse( boolean18 );
 
@@ -296,11 +297,9 @@ public class ContentTransferDTOTest
         assertEquals( "27;t", contentTransferDTO7.getOriginUrl() );
         AccessChannel accessChannel8 = AccessChannel.GENERIC_PROXY;
         StoreType storeType9 = StoreType.hosted;
-        StoreKey storeKey12 = new StoreKey( "org.commonjava.indy.service.tracking.model.dto.TrackedContentEntryDTO",
-                                            storeType9, "mpv" );
+        StoreKey storeKey12 = new StoreKey( PKG_TYPE_MAVEN, storeType9, "mpv" );
         assertEquals( "mpv", storeKey12.getName() );
-        assertEquals( "org.commonjava.indy.service.tracking.model.dto.TrackedContentEntryDTO",
-                      storeKey12.getPackageType() );
+        assertEquals( PKG_TYPE_MAVEN, storeKey12.getPackageType() );
         TrackedContentEntryDTO trackedContentEntryDTO14 = new TrackedContentEntryDTO( storeKey12, accessChannel8,
                                                                                       "org.commonjava.indy.service.tracking.model.dto.TrackedContentEntryDTO" );
         assertNull( trackedContentEntryDTO14.getMd5() );

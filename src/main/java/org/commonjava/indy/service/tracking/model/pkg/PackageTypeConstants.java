@@ -15,6 +15,12 @@
  */
 package org.commonjava.indy.service.tracking.model.pkg;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
+import static java.util.Collections.unmodifiableSet;
+
 public class PackageTypeConstants
 {
     public static final String PKG_TYPE_MAVEN = "maven";
@@ -27,5 +33,10 @@ public class PackageTypeConstants
     {
         return PKG_TYPE_MAVEN.equals( pkgType ) || PKG_TYPE_NPM.equals( pkgType ) || PKG_TYPE_GENERIC_HTTP.equals(
                         pkgType );
+    }
+
+    public static Set<String> getPackageTypes()
+    {
+        return unmodifiableSet( new HashSet<>( Arrays.asList( PKG_TYPE_MAVEN, PKG_TYPE_NPM, PKG_TYPE_GENERIC_HTTP ) ) );
     }
 }

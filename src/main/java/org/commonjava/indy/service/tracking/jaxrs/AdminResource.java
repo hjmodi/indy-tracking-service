@@ -132,7 +132,8 @@ public class AdminResource
     public File getZipRepository(
                     @Parameter( description = "User-assigned tracking session key", in = PATH, required = true ) @PathParam( "id" ) final String id )
     {
-        return controller.getZipRepository( id );
+        File file = controller.getZipRepository( id );
+        return file;
     }
 
     @Operation( description = "Alias of /{id}/record, returns the tracking record for the specified key" )
@@ -303,7 +304,7 @@ public class AdminResource
 
     @Operation( description = "Import records from a ZIP file." )
     @APIResponse( responseCode = "201", description = "Import ZIP content" )
-    @Path( "/report/export" )
+    @Path( "/report/import" )
     @PUT
     public Response importReport( final @Context UriInfo uriInfo, final @Context HttpServletRequest request )
     {
@@ -330,7 +331,7 @@ public class AdminResource
     @POST
     @Consumes( APPLICATION_JSON )
     @Produces( APPLICATION_JSON )
-    public Response doDelete( @Context final UriInfo uriInfo, @Context final BatchDeleteRequest request )
+    public Response doDelete( @Context final UriInfo uriInfo, final BatchDeleteRequest request )
     {
         String trackingID = request.getTrackingID();
 

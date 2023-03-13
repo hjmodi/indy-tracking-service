@@ -5,9 +5,9 @@ import java.util.Set;
 
 public enum StoreType
 {
-    group( false, "group", "groups", "g" ), remote( false, "remote", "remotes", "repository", "repositories",
-                                                    "r" ), hosted( true, "hosted", "hosted", "deploy", "deploys",
-                                                                   "deploy_point", "h", "d" );
+    group( false, "group", "groups", "g" ),
+    remote( false, "remote", "remotes", "repository", "repositories", "r" ),
+    hosted( true, "hosted", "hosted", "deploy", "deploys", "deploy_point", "h", "d" );
 
     private final boolean writable;
 
