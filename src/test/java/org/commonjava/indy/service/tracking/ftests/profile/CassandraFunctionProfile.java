@@ -15,7 +15,15 @@
  */
 package org.commonjava.indy.service.tracking.ftests.profile;
 
+import org.commonjava.indy.service.tracking.data.cassandra.CassandraClient;
+import org.commonjava.indy.service.tracking.data.cassandra.CassandraConfiguration;
+import org.commonjava.indy.service.tracking.data.cassandra.CassandraTrackingQuery;
+import org.junit.jupiter.api.BeforeEach;
+import org.testcontainers.containers.CassandraContainer;
+
+import java.net.URL;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 public class CassandraFunctionProfile
@@ -24,7 +32,9 @@ public class CassandraFunctionProfile
     @Override
     Map<String, String> getExtraConfigOverrides()
     {
-        return Collections.singletonMap( "repository.data-storage", "cassandra" );
+        Map<String, String> config = new HashMap<>();
+        config.put( "cassandra.port", "9142" );
+        return config;
     }
 
 }

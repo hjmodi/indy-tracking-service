@@ -396,4 +396,9 @@ public class CassandraTrackingQuery
         }
         return trackingKeys.stream().collect( Collectors.toSet() );
     }
+
+    public void createDtxTrackingRecord( DtxTrackingRecord trackingRecord )
+    {
+        trackingMapper.save( trackingRecord );
+    }
 }
