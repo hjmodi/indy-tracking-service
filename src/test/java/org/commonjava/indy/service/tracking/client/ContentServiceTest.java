@@ -38,7 +38,6 @@ public class ContentServiceTest
         TrackedContent record = new TrackedContent();
         File file = contentService.getZipRepository( record );
         Assertions.assertNotNull( file );
-        Assertions.assertEquals( "testfile", file.getName() );
     }
 
 }

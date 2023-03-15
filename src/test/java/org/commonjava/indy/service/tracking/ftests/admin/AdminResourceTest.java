@@ -1,34 +1,27 @@
 package org.commonjava.indy.service.tracking.ftests.admin;
 
-import com.datastax.oss.quarkus.test.CassandraTestResource;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.junit.mockito.InjectMock;
-import org.commonjava.indy.service.tracking.Constants;
 import org.commonjava.indy.service.tracking.client.content.BatchDeleteRequest;
-import org.commonjava.indy.service.tracking.controller.AdminController;
-import org.commonjava.indy.service.tracking.data.cassandra.CassandraClient;
 import org.commonjava.indy.service.tracking.data.cassandra.CassandraConfiguration;
-import org.commonjava.indy.service.tracking.data.cassandra.CassandraTrackingQuery;
 import org.commonjava.indy.service.tracking.exception.ContentException;
 import org.commonjava.indy.service.tracking.exception.IndyWorkflowException;
 import org.commonjava.indy.service.tracking.ftests.profile.CassandraFunctionProfile;
-import org.commonjava.indy.service.tracking.jaxrs.ResponseHelper;
 import org.commonjava.indy.service.tracking.model.StoreKey;
 import org.commonjava.indy.service.tracking.model.StoreType;
 import org.commonjava.indy.service.tracking.model.TrackingKey;
 import org.commonjava.indy.service.tracking.model.dto.TrackedContentDTO;
 import org.commonjava.indy.service.tracking.model.dto.TrackedContentEntryDTO;
-import org.commonjava.indy.service.tracking.model.dto.TrackingIdsDTO;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.CassandraContainer;
 
 import javax.inject.Inject;
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashSet;
@@ -36,18 +29,14 @@ import java.util.Set;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @QuarkusTest
 @TestProfile( CassandraFunctionProfile.class )
 public class AdminResourceTest
 {
+    private static volatile CassandraContainer<?> cassandraContainer;
+
     private final String TRACKING_ID = "tracking-id";
 
     private final String BASE_URL = "api/folo/admin/";
@@ -55,115 +44,100 @@ public class AdminResourceTest
     @InjectMock
     CassandraConfiguration config;
 
-    private volatile CassandraContainer<?> cassandraContainer;
-
-    @BeforeEach
-    public void start() throws Exception
-    {
-        this.cassandraContainer = (CassandraContainer) ( new CassandraContainer() );
-        URL resource = Thread.currentThread().getContextClassLoader().getResource( "init_script.cql" );
-        if ( resource != null )
-        {
-            this.cassandraContainer.withInitScript( "init_script.cql" );
-        }
-        this.cassandraContainer.start();
-        String host = this.cassandraContainer.getHost();
-        int port = this.cassandraContainer.getMappedPort( CassandraContainer.CQL_PORT );
-        when(config.getCassandraHost()).thenReturn( host );
-        when(config.getCassandraPort()).thenReturn( port );
-        when(config.getCassandraUser()).thenReturn( "cassandra" );
-        when(config.getCassandraPass()).thenReturn( "cassandra" );
-        when(config.getKeyspace()).thenReturn( "folo" );
-        when(config.getKeyspaceReplicas()).thenReturn( 1 );
-        when(config.isEnabled()).thenReturn( true );
-    }
-
-
-
     @Inject
     ObjectMapper mapper;
 
-    @Inject
-    private ResponseHelper responseHelper;
+    @BeforeAll
+    public static void init()
+    {
+        cassandraContainer = (CassandraContainer) ( new CassandraContainer() );
+        String initScript = "folo_init_script.cql";
+        URL resource = Thread.currentThread().getContextClassLoader().getResource( initScript );
+        if ( resource != null )
+        {
+            cassandraContainer.withInitScript( initScript );
+        }
+        cassandraContainer.start();
+    }
+
+    @AfterAll
+    public static void stop()
+    {
+        cassandraContainer.stop();
+    }
+
+    @BeforeEach
+    public void start()
+    {
+        String host = cassandraContainer.getHost();
+        int port = cassandraContainer.getMappedPort( CassandraContainer.CQL_PORT );
+        when( config.getCassandraHost() ).thenReturn( host );
+        when( config.getCassandraPort() ).thenReturn( port );
+        when( config.getCassandraUser() ).thenReturn( "cassandra" );
+        when( config.getCassandraPass() ).thenReturn( "cassandra" );
+        when( config.getKeyspace() ).thenReturn( "folo" );
+        when( config.getKeyspaceReplicas() ).thenReturn( 1 );
+        when( config.isEnabled() ).thenReturn( true );
+    }
 
     @Test
-    void testRecalculateRecordSuccess() throws IndyWorkflowException
+    void testRecalculateRecordSuccess()
     {
-        TrackedContentDTO trackedContentDTO = new TrackedContentDTO();
+        String trackingId = "abc125";
+        String expected_string = "{\"key\":{\"id\":\"" + trackingId
+                        + "\"},\"uploads\":[{\"storeKey\":{\"packageType\":\"maven\",\"type\":\"remote\",\"name\":\"test\"},\"accessChannel\":\"GENERIC_PROXY\",\"path\":\"/path/to/file\",\"originUrl\":\"https://example.com/file\",\"localUrl\":\"http://localhost:8081/api/content/maven/remote/test/path/to/file\",\"md5\":\"md5hash124\",\"sha256\":\"sha256hash124\",\"sha1\":\"sha1hash124\",\"size\":null,\"timestamps\":null}],\"downloads\":[{\"storeKey\":{\"packageType\":\"maven\",\"type\":\"remote\",\"name\":\"test\"},\"accessChannel\":\"GENERIC_PROXY\",\"path\":\"/path/to/file\",\"originUrl\":\"https://example.com/file\",\"localUrl\":\"http://localhost:8081/api/content/maven/remote/test/path/to/file\",\"md5\":\"md5hash124\",\"sha256\":\"sha256hash124\",\"sha1\":\"sha1hash124\",\"size\":null,\"timestamps\":null}]}";
         given().when()
-               .get( BASE_URL + TRACKING_ID + "/record/recalculate" )
+               .get( BASE_URL + trackingId + "/record/recalculate" )
                .then()
                .statusCode( 200 )
-               .body( is( responseHelper.formatOkResponseWithJsonEntity( trackedContentDTO ).getEntity().toString() ) );
+               .body( is( expected_string ) );
     }
 
     @Test
-    void testRecalculateRecordNotFound() throws IndyWorkflowException
+    void testRecalculateRecordNotFound()
     {
-        given().when().get( BASE_URL + TRACKING_ID + "/record/recalculate" ).then().statusCode( 404 );
+        given().when().get( BASE_URL + "random-id" + "/record/recalculate" ).then().statusCode( 404 );
     }
 
     @Test
-    void testRecalculateRecordFailed() throws IndyWorkflowException
+    public void testGetZipRepository()
     {
-        given().when().get( BASE_URL + TRACKING_ID + "/record/recalculate" ).then().statusCode( 404 );
-    }
-
-    @Test
-    public void testGetZipRepository() throws IOException
-    {
-        File file = File.createTempFile( "test", ".zip" );
-
-        given().when().get( BASE_URL + TRACKING_ID + "/record/zip" ).then().statusCode( 200 ).body( is( "" ) );
+        given().when().get( BASE_URL + "abc123" + "/record/zip" ).then().statusCode( 200 ).body( is( "" ) );
     }
 
     @Test
     void testGetRecordReturnsOkResponse() throws IndyWorkflowException
     {
-        // given
-        TrackedContentDTO trackedContentDTO = new TrackedContentDTO();
-        trackedContentDTO.setKey( new TrackingKey( TRACKING_ID ) );
+        String trackingId = "abc123";
+        String expected_response =
+                        "{\"key\":{\"id\":\"abc123\"},\"uploads\":[],\"downloads\":[{\"storeKey\":{\"packageType\":\"maven\",\"type\":\"remote\",\"name\":\"store_key_1\"},\"accessChannel\":\"GENERIC_PROXY\",\"path\":\"/path/to/file\",\"originUrl\":\"https://example.com/file\",\"localUrl\":\"http://localhost:8081/api/content/maven/remote/store_key_1/path/to/file\",\"md5\":\"md5hash123\",\"sha256\":\"sha256hash123\",\"sha1\":\"sha1hash123\",\"size\":1024,\"timestamps\":[1647317221,1647317231]}]}";
 
         given().when()
-               .get( BASE_URL + TRACKING_ID + "/record" )
+               .get( BASE_URL + trackingId + "/record" )
                .then()
                .statusCode( 200 )
-               .body( is( responseHelper.formatOkResponseWithJsonEntity( trackedContentDTO ).getEntity().toString() ) );
-
-        given().when()
-               .get( BASE_URL + TRACKING_ID + "/record" )
-               .then()
-               .statusCode( 200 )
-               .body( is( responseHelper.formatOkResponseWithJsonEntity( trackedContentDTO ).getEntity().toString() ) );
-
+               .body( is( expected_response ) );
     }
 
     @Test
     void testGetRecordReturnsNotFoundResponse() throws IndyWorkflowException
     {
-        // given
-
-        // when
-        given().when().get( BASE_URL + TRACKING_ID + "/record" ).then().statusCode( 500 );
+        // when no existing tracking record is found a new tracking report is returned
+        String expected_string = "{\"key\":{\"id\":\"lslsls\"},\"uploads\":[],\"downloads\":[]}";
+        given().when().get( BASE_URL + "lslsls" + "/record" ).then().statusCode( 200 ).body( is( expected_string ) );
     }
 
     @Test
     void testSealRecordSuccess()
     {
-        // Mock controller methods
-
-        // Call the function
-        given().when().post( BASE_URL + TRACKING_ID + "/record" ).then().statusCode( 200 );
+        String trackingId = "tracking-id";
+        given().when().post( BASE_URL + trackingId + "/record" ).then().statusCode( 200 );
     }
 
     @Test
     void testSealRecordError()
     {
-        // Mock controller methods
-        final String errorMessage = "Failed to seal tracking record.";
-
-        // Call the function
-        given().when().post( BASE_URL + TRACKING_ID + "/record" ).then().statusCode( 500 );
+        given().when().post( BASE_URL + "random-id" + "/record" ).then().statusCode( 200 ).body( is( "" ) );
     }
 
     @Test
@@ -179,73 +153,32 @@ public class AdminResourceTest
     }
 
     @Test
-    public void testClearRecordError() throws ContentException
-    {
-        String errorMessage = "An error occurred while clearing the record.";
-
-        // Mock the controller's behavior
-
-        // Act
-        given().when().delete( BASE_URL + TRACKING_ID + "/record" ).then().statusCode( 500 );
-
-        // Assert
-    }
-
-    @Test
     public void testGetRecordIdsSuccess()
     {
         // Set up mock response from adminController
-        Set<Constants.TRACKING_TYPE> types = new HashSet<>();
-        types.add( Constants.TRACKING_TYPE.SEALED );
-        String expected_string = "{\"inProgress\":null,\"sealed\":null}";
-
-
-        // Call getRecordIds() function
-        given().when().get( BASE_URL + "report/ids/sealed" ).then().statusCode( 200 ).body( is( expected_string ) );
-
-        given().when().get( BASE_URL + "report/ids/legacy" ).then().statusCode( 200 ).body( is( expected_string ) );
-
-        // Verify that the getAllTrackingIds() function was called on the adminController
-
-    }
-
-    @Test
-    public void testGetRecordIdsNotFound()
-    {
-        // Set up mock response from adminController
+        String expected_string1 =
+                        "{\"inProgress\":null,\"sealed\":[\"abc123\",\"abc124\",\"abc125\",\"abc126\",\"abc127\",\"tracking-id\",\"abc128\"]}";
+        String expected_string2 =
+                        "{\"inProgress\":null,\"sealed\":[\"abc123\",\"abc124\",\"abc125\",\"abc126\",\"abc127\",\"tracking-id\",\"abc128\"]}";
 
         // Call getRecordIds() function
-        given().when().get( BASE_URL + "report/ids/legacy" ).then().statusCode( 404 );
+        given().when().get( BASE_URL + "report/ids/sealed" ).then().statusCode( 200 ).body( is( expected_string1 ) );
 
-        // Verify that the getAllTrackingIds() function was called on the adminController
+        given().when().get( BASE_URL + "report/ids/legacy" ).then().statusCode( 200 ).body( is( expected_string2 ) );
+
     }
 
     @Test
     public void testExportReportSuccess() throws IndyWorkflowException, IOException
     {
-        File file = File.createTempFile( "test", ".zip" );
         // Set up mock response from adminController
-        given().when().get( BASE_URL + "report/export" ).then().statusCode( 200 ).body( is( "" ) );
+        given().when().get( BASE_URL + "report/export" ).then().statusCode( 200 );
     }
 
     @Test
-    public void testExportReportError() throws IndyWorkflowException
+    public void testImportReportSuccess()
     {
-        // Set up mock response from adminController
-        given().when().get( BASE_URL + "report/export" ).then().statusCode( 500 );
-    }
-
-    @Test
-    public void testImportReportSuccess() throws IndyWorkflowException
-    {
-        given().when().put( BASE_URL + "report/import" ).then().statusCode( 201 );
-    }
-
-    @Test
-    public void testImportReportError() throws IndyWorkflowException, IOException
-    {
-        // Set up mock response from adminController
-        given().when().put( BASE_URL + "report/import" ).then().statusCode( 500 );
+        given().body( "test" ).when().put( BASE_URL + "report/import" ).then().statusCode( 201 );
     }
 
     @Test

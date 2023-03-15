@@ -18,14 +18,14 @@ package org.commonjava.indy.service.tracking.ftests.profile;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CassandraFunctionProfile
+public class SecuredFunctionProfile
                 extends BaseIndyTestProfile
 {
     @Override
     Map<String, String> getExtraConfigOverrides()
     {
         Map<String, String> config = new HashMap<>();
-        config.put( "cassandra.port", "9142" );
+        config.put( "indy_security.enabled", "true" );
         return config;
     }
 

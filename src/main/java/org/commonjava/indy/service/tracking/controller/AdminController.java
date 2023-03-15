@@ -15,12 +15,15 @@
  */
 package org.commonjava.indy.service.tracking.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.kafka.common.protocol.types.Field;
 import org.commonjava.indy.service.tracking.Constants;
 import org.commonjava.indy.service.tracking.client.content.ContentService;
 import org.commonjava.indy.service.tracking.config.IndyTrackingConfiguration;
 import org.commonjava.indy.service.tracking.data.cassandra.CassandraTrackingQuery;
 import org.commonjava.indy.service.tracking.exception.ContentException;
 import org.commonjava.indy.service.tracking.exception.IndyWorkflowException;
+import org.commonjava.indy.service.tracking.jaxrs.DTOStreamingOutput;
 import org.commonjava.indy.service.tracking.model.TrackedContent;
 import org.commonjava.indy.service.tracking.model.TrackedContentEntry;
 import org.commonjava.indy.service.tracking.model.TrackingKey;
@@ -35,14 +38,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.New;
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectOutputStream;
 import java.net.MalformedURLException;
 import java.nio.file.Paths;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -257,6 +263,10 @@ public class AdminController
         TrackingKey trackingKey = new TrackingKey( id );
         TrackedContent record = recordManager.get( trackingKey );
 
+        if (record == null) {
+            return null;
+        }
+
         AtomicBoolean failed = new AtomicBoolean( false );
 
         Set<TrackedContentEntry> recalculatedUploads = recalculateEntrySet( record.getUploads(), failed );
@@ -284,7 +294,8 @@ public class AdminController
         Set<ContentTransferDTO> transfer_entries = constructTransferDTOSet( entries );
         try (Response response = contentService.recalculateEntrySet( transfer_entries ))
         {
-            return response.readEntity( TrackedContentEntrySetDTO.class ).entries;
+            Set<TrackedContentEntry> returned_entries = response.readEntity( Set.class );
+            return returned_entries;
         }
         catch ( Exception e )
         {

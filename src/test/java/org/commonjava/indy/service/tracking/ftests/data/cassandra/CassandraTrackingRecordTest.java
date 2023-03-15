@@ -17,7 +17,6 @@ package org.commonjava.indy.service.tracking.ftests.data.cassandra;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
-import org.commonjava.indy.service.tracking.data.cassandra.CassandraClient;
 import org.commonjava.indy.service.tracking.data.cassandra.CassandraConfiguration;
 import org.commonjava.indy.service.tracking.data.cassandra.CassandraTrackingQuery;
 import org.commonjava.indy.service.tracking.data.cassandra.DtxTrackingRecord;
@@ -52,21 +51,22 @@ public class CassandraTrackingRecordTest
     public void start() throws Exception
     {
         this.cassandraContainer = (CassandraContainer) ( new CassandraContainer() );
-        URL resource = Thread.currentThread().getContextClassLoader().getResource( "init_script.cql" );
+        String initScript = "cassandra_init_script.cql";
+        URL resource = Thread.currentThread().getContextClassLoader().getResource( initScript );
         if ( resource != null )
         {
-            this.cassandraContainer.withInitScript( "init_script.cql" );
+            this.cassandraContainer.withInitScript( initScript );
         }
         this.cassandraContainer.start();
         String host = this.cassandraContainer.getHost();
         int port = this.cassandraContainer.getMappedPort( CassandraContainer.CQL_PORT );
-        when(config.getCassandraHost()).thenReturn( host );
-        when(config.getCassandraPort()).thenReturn( port );
-        when(config.getCassandraUser()).thenReturn( "cassandra" );
-        when(config.getCassandraPass()).thenReturn( "cassandra" );
-        when(config.getKeyspace()).thenReturn( "folo" );
-        when(config.getKeyspaceReplicas()).thenReturn( 1 );
-        when(config.isEnabled()).thenReturn( true );
+        when( config.getCassandraHost() ).thenReturn( host );
+        when( config.getCassandraPort() ).thenReturn( port );
+        when( config.getCassandraUser() ).thenReturn( "cassandra" );
+        when( config.getCassandraPass() ).thenReturn( "cassandra" );
+        when( config.getKeyspace() ).thenReturn( "folo" );
+        when( config.getKeyspaceReplicas() ).thenReturn( 1 );
+        when( config.isEnabled() ).thenReturn( true );
     }
 
     @Test
