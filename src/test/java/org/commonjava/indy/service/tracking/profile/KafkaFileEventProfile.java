@@ -26,6 +26,7 @@ public class KafkaFileEventProfile
     {
         Map<String, String> config = new HashMap<>();
         config.put( "mp.messaging.incoming.file-event-in.connector", "smallrye-in-memory" );
+        config.put( "mp.messaging.incoming.promote-event-in.connector", "smallrye-in-memory" );
         return config;
     }
 

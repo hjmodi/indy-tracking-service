@@ -37,7 +37,7 @@ import static java.lang.Thread.sleep;
 import static org.mockito.Mockito.when;
 
 @QuarkusTest
-@TestProfile( CassandraFunctionProfile.class )
+@TestProfile( KafkaFileEventProfile.class )
 public class TrackingListenerTest
 {
     private static volatile CassandraContainer<?> cassandraContainer;
@@ -149,7 +149,7 @@ public class TrackingListenerTest
         event.setSourceStore( sourceStore.toString() );
         event.setTargetStore( targetStore.toString() );
         pathsPromoteCompleteEvents.send( event );
-        sleep( 200000 );
+        sleep( 10000 );
         TrackedContent trackedContent = trackingQuery.get( new TrackingKey( trackingId ) );
         assert trackedContent != null;
         Set<TrackedContentEntry> uploads = trackedContent.getUploads();
