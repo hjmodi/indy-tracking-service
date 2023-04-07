@@ -65,7 +65,7 @@ import static org.commonjava.indy.service.tracking.Constants.TRACKING_TYPE.SEALE
 import static org.eclipse.microprofile.openapi.annotations.enums.ParameterIn.PATH;
 
 @Tag( name = "Tracking Record Access", description = "Manages tracking records." )
-@Path( "/api/folo/admin" )
+@Path( "/api/tracking/admin" )
 @ApplicationScoped
 public class AdminResource
 {

@@ -20,7 +20,7 @@ public class AdminResourceSecurityTest
 {
     private final String TRACKING_ID = "tracking-id";
 
-    private final String BASE_URL = "api/folo/admin/";
+    private final String BASE_URL = "api/tracking/admin/";
 
     @Inject
     ObjectMapper mapper;

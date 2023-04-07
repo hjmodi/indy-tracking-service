@@ -16,7 +16,7 @@
 
 constraints:
   - role: admin
-    urlPattern: "/api/folo/admin/.*"
+    urlPattern: "/api/tracking/admin/.*"
     methods:
       - POST
       - PUT
